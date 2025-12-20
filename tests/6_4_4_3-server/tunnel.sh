@@ -1,0 +1,37 @@
+#!/bin/sh
+
+set -e
+
+RUN_PATH=$(dirname "$(realpath "$0")")
+. $RUN_PATH/env.sh
+
+cd $RUN_PATH
+
+# cert_sn=$(openssl x509 -noout -serial -in $DATA_PATH/client.cert)
+cert_sn=$(openssl x509 -noout -serial -in $DATA_PATH/tunnel.cert)
+cert_sn=${cert_sn#serial=}
+
+cat >$DATA_PATH/conf.json <<EOF
+{
+    "mappings": [
+        {
+            "server": {
+                "host": "127.0.0.1",
+                "port": $TUNNEL_PORT,
+                "ssl": {
+                    "cert_path": "$DATA_PATH/tunnel.cert",
+                    "key_path": "$DATA_PATH/tunnel.key",
+                    "ca_path": "$DATA_PATH/ca.cert",
+                    "allowed_cert_sn": ["$cert_sn"]
+                }
+            },
+            "client": {
+                "host": "127.0.0.1",
+                "port": $SERVER_PORT
+            }
+        }
+    ]
+}
+EOF
+
+exec $TUNNEL $DATA_PATH/conf.json

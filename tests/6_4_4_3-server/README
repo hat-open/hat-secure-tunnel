@@ -1,0 +1,8 @@
+Test CA with serial number verification
+
+Security events:
+- alarm: certificate validation: trusted individual certificate from authorized
+  CA not available
+
+Expected:
+- connection closed

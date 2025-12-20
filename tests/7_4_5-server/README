@@ -1,0 +1,7 @@
+Test renegotiation
+
+Security events:
+- notice: TLS handshake successfully performed
+
+Expected:
+- periodic handshake

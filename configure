@@ -1,0 +1,73 @@
+#!/bin/sh
+
+set -e
+
+cd $(dirname "$(realpath "$0")")
+
+CC="${CC:-cc}"
+CFLAGS="${CFLAGS--g}"
+LDFLAGS="${LDFLAGS-}"
+LDLIBS=
+PREFIX="${PREFIX-/usr/local}"
+DESTDIR="${DESTDIR-}"
+
+src_dir=src
+build_dir=build
+
+if command -v pkg-config >/dev/null; then
+    libs="libuv openssl jansson"
+
+    for lib in $libs; do
+        CFLAGS="${CFLAGS:+$CFLAGS }$(pkg-config --cflags $lib)"
+        LDFLAGS="${LDFLAGS:+$LDFLAGS }$(pkg-config --libs-only-L --libs-only-other $lib)"
+        LDLIBS="${LDLIBS:+$LDLIBS }$(pkg-config --libs-only-l $lib)"
+    done
+
+else
+    LDFLAGS="${LDFLAGS:+$LDFLAGS }-luv -lssl -lcrypto -ljansson"
+fi
+
+sources="$(find $src_dir -name '*.c' | \
+           sed "s/^$src_dir/\\\$(SRC_DIR)/" | \
+           tr -s '\n' ' ')"
+headers="$(find $src_dir -name '*.h' | \
+           sed "s/^$src_dir/\\\$(SRC_DIR)/" | \
+           tr -s '\n' ' ')"
+objects="$(find $src_dir -name '*.c' | \
+           sed -e "s/^$src_dir/\\\$(OBJ_DIR)/" -e "s/\\.c$/\\.o/" | \
+           tr -s '\n' ' ')"
+
+cat >config.mk <<EOF
+CC = $CC
+CFLAGS = $CFLAGS
+LDFLAGS = $LDFLAGS
+LDLIBS = $LDLIBS
+PREFIX = $PREFIX
+DESTDIR = $DESTDIR
+
+SRC_DIR = $src_dir
+BUILD_DIR = $build_dir
+OBJ_DIR = \$(BUILD_DIR)/obj
+BIN = \$(BUILD_DIR)/hat-iec62351-tunnel
+
+SOURCES = $sources
+HEADERS = $headers
+OBJECTS = $objects
+EOF
+
+{
+printf "\$(BIN): \$(OBJECTS)\n"
+printf "\t@mkdir -p \$(BUILD_DIR)\n"
+printf "\t\$(CC) \$(LDFLAGS) -o \$(BIN) \$(OBJECTS) \$(LDLIBS)\n"
+
+for src in $sources; do
+    obj="${src%.c}.o"
+    obj="\$(OBJ_DIR)${obj#\$(SRC_DIR)}"
+
+    printf "\n$obj: $src $headers\n"
+    printf "\t@mkdir -p \$(OBJ_DIR)\n"
+    printf "\t\$(CC) \$(CFLAGS) -c -o \$@ $src\n"
+done
+} >rules.mk
+
+

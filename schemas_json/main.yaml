@@ -1,0 +1,64 @@
+$schema: "https://json-schema.org/draft/2020-12/schema"
+$id: "hat-iec62351-tunnel://main.yaml"
+type: object
+required:
+    - mappings
+properties:
+    type:
+        const: event
+        description: configuration type identification
+    version:
+        type: string
+        description: component version
+    mappings:
+        type: array
+        items:
+            $ref: "hat-iec62351-tunnel://main.yaml#/$defs/mapping"
+$defs:
+    mapping:
+        type: object
+        required:
+            - server
+            - client
+        properties:
+            server:
+                $ref: "hat-iec62351-tunnel://main.yaml#/$defs/endpoint"
+            client:
+                $ref: "hat-iec62351-tunnel://main.yaml#/$defs/endpoint"
+    endpoint:
+        type: object
+        required:
+            - host
+            - port
+        properties:
+            host:
+                type: string
+            port:
+                type: integer
+            ssl:
+                type: object
+                required:
+                    - cert_path
+                    - key_path
+                    - ca_path
+                properties:
+                    cert_path:
+                        type: string
+                    key_path:
+                        type: string
+                    ca_path:
+                        type: string
+                    password:
+                        type: string
+                    crl_path:
+                        type: string
+                    renegotiate_interval:
+                        type: integer
+                    crl_interval:
+                        type: integer
+                    session_cache_timeout:
+                        type: integer
+                    allowed_cert_sn:
+                        type: array
+                        items:
+                            type: string

@@ -1,0 +1,7 @@
+Test maximum certificate size
+
+Security events:
+- alarm: TLS certificate size exceeded
+
+Expected:
+- connection closed

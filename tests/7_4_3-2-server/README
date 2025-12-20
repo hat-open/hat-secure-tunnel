@@ -1,0 +1,7 @@
+Test EC certificate type
+
+Security events:
+- notice: TLS handshake successfully performed
+
+Expected:
+- connection established

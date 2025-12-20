@@ -1,0 +1,7 @@
+Test certificate expiration
+
+Security events:
+- alarm: certificate validation: expired certificate
+
+Expected:
+- close connection

@@ -1,0 +1,7 @@
+Test insufficient RSA key length
+
+Security events:
+- alarm: insufficient RSA key length
+
+Expected:
+- connection closed

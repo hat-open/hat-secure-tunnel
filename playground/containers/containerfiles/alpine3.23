@@ -1,0 +1,12 @@
+FROM alpine:3.23 as base
+RUN apk update && \
+    apk add build-base \
+            jansson-dev jansson-static \
+            libuv-dev libuv-static \
+            openssl-dev openssl-libs-static
+
+FROM base
+WORKDIR /hat
+VOLUME /hat/build
+ENV LDFLAGS=-static
+COPY . .

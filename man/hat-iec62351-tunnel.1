@@ -1,0 +1,111 @@
+.Dd January 7, 2026
+.Dt HAT-IEC62351-TUNNEL 1
+.Os
+
+.Sh NAME
+.Nm hat-iec62351-tunnel
+.Nd IEC 62351-3 tunnel
+
+.Sh SYNOPSIS
+.Nm
+.Op Fl h
+.Op Fl l Ar LOG_LEVEL
+.Ar <conf-path>
+
+.Sh DESCRIPTION
+.Nm
+provides tunnel between unencrypted and TLS communication based on IEC 62351-3.
+
+Arguments:
+.Bl -tag
+
+.It Fl h
+Display usage help and exit
+
+.It Fl l Ar LOG_LEVEL
+Set logging level (DEBUG, INFO, WARNING, ERROR) (default INFO)
+
+.It Ar <conf-path>
+Path to configuration file
+
+.El
+
+.Sh FILES
+
+.Ss hat-iec62351-tunnel://main.yaml
+JSON Schema configuration definition.
+
+.Bd -literal
+
+$schema: "https://json-schema.org/draft/2020-12/schema"
+$id: "hat-iec62351-tunnel://main.yaml"
+type: object
+required:
+    - mappings
+properties:
+    type:
+        const: event
+        description: configuration type identification
+    version:
+        type: string
+        description: component version
+    mappings:
+        type: array
+        items:
+            $ref: "hat-iec62351-tunnel://main.yaml#/$defs/mapping"
+$defs:
+    mapping:
+        type: object
+        required:
+            - server
+            - client
+        properties:
+            server:
+                $ref: "hat-iec62351-tunnel://main.yaml#/$defs/endpoint"
+            client:
+                $ref: "hat-iec62351-tunnel://main.yaml#/$defs/endpoint"
+    endpoint:
+        type: object
+        required:
+            - host
+            - port
+        properties:
+            host:
+                type: string
+            port:
+                type: integer
+            ssl:
+                type: object
+                required:
+                    - cert_path
+                    - key_path
+                    - ca_path
+                properties:
+                    cert_path:
+                        type: string
+                    key_path:
+                        type: string
+                    ca_path:
+                        type: string
+                    password:
+                        type: string
+                    crl_path:
+                        type: string
+                    renegotiate_interval:
+                        type: integer
+                    crl_interval:
+                        type: integer
+                    session_cache_timeout:
+                        type: integer
+                    allowed_cert_sn:
+                        type: array
+                        items:
+                            type: string
+
+.Ed
+
+.Sh EXIT STATUS
+.Ex -std
+
+.Sh AUTHORS
+.An Hat Open AUTHORS

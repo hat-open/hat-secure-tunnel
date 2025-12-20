@@ -1,0 +1,7 @@
+Test unsupported TLS version
+
+Security events:
+- alarm: unsecure communication: deprecated TLS version proposed
+
+Expected:
+- connection closed
