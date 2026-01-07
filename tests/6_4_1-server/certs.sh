@@ -20,7 +20,7 @@ openssl req -batch -x509 -noenc \
         -keyout $DATA_PATH/ca_client.key \
         -out $DATA_PATH/ca_client.cert
 
-cat $DATA_PATH/ca_tunnel.cert $DATA_PATH/ca_client.cert > $DATA_PATH/ca_all.cert
+cat $DATA_PATH/ca_tunnel.cert $DATA_PATH/ca_client.cert >$DATA_PATH/ca_all.cert
 
 openssl req -batch -x509 -noenc \
         -newkey $key_type \

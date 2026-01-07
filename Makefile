@@ -22,6 +22,6 @@ format:
 clean:
 	rm -rf $(BUILD_DIR)
 
-.PHONY: all format clean
+.PHONY: all install format clean
 
 include rules.mk

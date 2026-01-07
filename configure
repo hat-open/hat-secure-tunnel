@@ -69,5 +69,3 @@ for src in $sources; do
     printf "\t\$(CC) \$(CFLAGS) -c -o \$@ $src\n"
 done
 } >rules.mk
-
-
