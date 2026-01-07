@@ -1,2 +1,5 @@
 * CRL nextUpdate as defined by 6.4.4.4.2
 * ssl shutdown
+* tests
+* crl checks using ssl ctx
+* revision of security events
