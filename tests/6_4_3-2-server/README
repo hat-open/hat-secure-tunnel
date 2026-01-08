@@ -1,7 +1,7 @@
 Test lack of local certificate
 
 Security events:
-- alarm: peer certificate unavailable
+- alarm: endpoint certificate unavailable
 
 Expected:
-- connection closed
+- tunnel closed

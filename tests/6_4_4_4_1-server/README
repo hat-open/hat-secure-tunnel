@@ -1,0 +1,9 @@
+Test revoked certificates
+
+Security events:
+- alarm: certificate validation: revoked certificate
+- alarm: session terminated due to revoked certificate
+
+Expected:
+- connection with certificate not included in crl remains open (client1)
+- connection with certificate included in crl is closed (client2)

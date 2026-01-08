@@ -1,0 +1,4 @@
+Test refresh CRL based on nextUpdate field and configured interval
+
+Expected:
+- connection remains open

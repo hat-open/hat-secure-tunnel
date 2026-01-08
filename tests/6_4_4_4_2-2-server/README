@@ -1,0 +1,7 @@
+Test local CRL expired
+
+Security events:
+- warning: CRL expired
+
+Expected:
+- connection remains open
