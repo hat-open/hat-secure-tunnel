@@ -83,9 +83,9 @@ static int on_verify(int preverify_ok, X509_STORE_CTX *x509_ctx) {
         log_event(SECURITY_EVENT_TLS_NO_CA_MATCH, NULL);
         return 0;
 
-    case X509_V_ERR_UNABLE_TO_GET_CRL:
-        log_event(SECURITY_EVENT_TLS_NO_CA_MATCH, NULL);
-        return 0;
+        // case X509_V_ERR_UNABLE_TO_GET_CRL:
+        //     log_event(SECURITY_EVENT_TLS_NO_CRL, NULL);
+        //     return 0;
 
     case X509_V_ERR_CERT_SIGNATURE_FAILURE:
         log_event(SECURITY_EVENT_TLS_SIG_V_FAILED, NULL);
@@ -94,6 +94,10 @@ static int on_verify(int preverify_ok, X509_STORE_CTX *x509_ctx) {
     case X509_V_ERR_CERT_HAS_EXPIRED:
         log_event(SECURITY_EVENT_TLS_CERT_EXP, NULL);
         return 0;
+
+        // case X509_V_ERR_CRL_HAS_EXPIRED:
+        //     log_event(SECURITY_EVENT_TLS_CRL_EXP, NULL);
+        //     return 0;
 
     case X509_V_ERR_CERT_REVOKED:
         log_event(SECURITY_EVENT_TLS_CERT_REVOKED, NULL);
@@ -456,6 +460,12 @@ static int verify_crl(ssl_t *ssl) {
         return 0;
     }
 
+    const ASN1_TIME *next_update = X509_CRL_get0_nextUpdate(ssl->crl);
+    if (next_update) {
+        if (ASN1_TIME_cmp_time_t(next_update, time(NULL)) < 0)
+            log_event(SECURITY_EVENT_TLS_CRL_EXP, NULL);
+    }
+
     X509_REVOKED *revoked;
     int result = X509_CRL_get0_by_cert(ssl->crl, &revoked, cert);
     X509_free(cert);
@@ -607,6 +617,9 @@ ssl_ctx_t *create_ssl_ctx(endpoint_type_t type, ssl_conf_t *conf) {
         log_error("SSL_CTX_check_private_key error");
         goto error;
     }
+
+    // void X509_STORE_set_get_crl(X509_STORE *ctx, X509_STORE_CTX_get_crl_fn
+    // get_crl);
 
     // X509_VERIFY_PARAM *param = X509_VERIFY_PARAM_new();
     // X509_VERIFY_PARAM_set_flags(param, X509_V_FLAG_CRL_CHECK);

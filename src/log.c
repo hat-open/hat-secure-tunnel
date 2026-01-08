@@ -66,6 +66,9 @@ static char *get_event_str(security_event_t event) {
     case SECURITY_EVENT_TLS_NO_CRL:
         return "warning: local CRL not accessible";
 
+    case SECURITY_EVENT_TLS_CRL_EXP:
+        return "warning: CRL expired";
+
     case SECURITY_EVENT_TLS_CERT_EXP:
         return "alarm: certificate validation: expired certificate";
 
