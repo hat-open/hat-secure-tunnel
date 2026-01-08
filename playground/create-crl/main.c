@@ -1,4 +1,61 @@
+#include <unistd.h>
+
 #include <openssl/ssl.h>
+
+
+typedef struct {
+    uint64_t next_update;
+    char *key_path;
+} args_t;
+
+
+static void print_usage(FILE *f, char *name) {
+    fprintf(f,
+            "Usage: %s [-h] [-u SECONDS] <key_path>\n"
+            "\n"
+            "Create CRL containing revocation of certificates read from stdin. "
+            "Resulting CRL is written to stdout.\n"
+            "\n"
+            "  Arguments:\n"
+            "    <key_path>   Private key used for signing CRL\n"
+            "\n"
+            "  Options:\n"
+            "    -h            Display usage help and exit\n"
+            "    -u SECONDS    Set nextUpdate field to SECONDS into future\n",
+            name);
+}
+
+
+static int parse_args(int argc, char *argv[], args_t *args) {
+    args->next_update = 0;
+
+    int opt;
+    while ((opt = getopt(argc, argv, "hl:")) != -1) {
+        switch (opt) {
+        case 'h':
+            print_usage(stdout, argv[0]);
+            exit(0);
+
+        case 'u':
+            args->next_update = atoi(optarg);
+            break;
+
+        default:
+            print_usage(stderr, argv[0]);
+            return -1;
+        }
+    }
+
+    if (argc - optind != 1) {
+        fprintf(stderr, "invalid number of required arguments\n");
+        print_usage(stderr, argv[0]);
+        return -1;
+    }
+
+    args->key_path = argv[optind];
+
+    return 0;
+}
 
 
 static void set_last_update(X509_CRL *crl, time_t t) {
@@ -27,15 +84,19 @@ static void sign(X509_CRL *crl, char *key_path) {
 
 
 int main(int argc, char *argv[]) {
-    X509_REVOKED *revs[] = {};
+    args_t args;
+    if (parse_args(argc, argv, &args) < 0)
+        return 1;
 
     X509_CRL *crl = X509_CRL_new();
 
-    time_t now = time(NULL);
+    sign(crl, args.key_path);
 
+    time_t now = time(NULL);
     set_last_update(crl, now);
-    set_next_update(crl, now + 10);
-    sign(crl, argv[1]);
+
+    if (args.next_update)
+        set_next_update(crl, now + args.next_update);
 
     while (1) {
         X509 *cert = PEM_read_X509(stdin, NULL, NULL, NULL);
