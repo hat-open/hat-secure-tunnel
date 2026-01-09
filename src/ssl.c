@@ -554,8 +554,13 @@ ssl_ctx_t *create_ssl_ctx(endpoint_type_t type, ssl_conf_t *conf) {
     if ((result_options & options) != options)
         log_warning("SSL_CTX_set_options result diferent from argument");
 
-    if (SSL_CTX_set_cipher_list(ctx->ctx, CHIPER_LIST) != 1) {
+    if (SSL_CTX_set_cipher_list(ctx->ctx, CHIPER_LIST_V1_2) != 1) {
         log_error("SSL_CTX_set_cipher_list error");
+        goto error;
+    }
+
+    if (SSL_CTX_set_ciphersuites(ctx->ctx, CHIPER_LIST_V1_3) != 1) {
+        log_error("SSL_CTX_set_ciphersuites error");
         goto error;
     }
 
