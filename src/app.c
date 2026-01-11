@@ -99,7 +99,7 @@ app_t *create_app(app_conf_t *app_conf) {
     app->conf = app_conf;
     app->loop = NULL;
     app->sigint_handle = NULL;
-    app->sigint_handle = NULL;
+    app->sigterm_handle = NULL;
     app->mappings = NULL;
 
     app->loop = create_loop(app);
