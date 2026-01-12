@@ -2,8 +2,8 @@
 
 set -e
 
-PLAYGROUND_PATH=$(dirname "$(realpath "$0")")
-. $PLAYGROUND_PATH/env.sh
+TESTS_PATH=$(dirname "$(realpath "$0")")
+. $TESTS_PATH/env.sh
 
 rm -rf $CERTS_PATH
 mkdir -p $CERTS_PATH

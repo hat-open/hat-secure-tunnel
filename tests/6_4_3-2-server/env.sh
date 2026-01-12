@@ -1,7 +1,7 @@
 : ${RUN_PATH:?}
 
-PLAYGROUND_PATH=$RUN_PATH/..
-. $PLAYGROUND_PATH/env.sh
+TESTS_PATH=$RUN_PATH/..
+. $TESTS_PATH/env.sh
 
 DATA_PATH=$RUN_PATH/data
 mkdir -p $DATA_PATH

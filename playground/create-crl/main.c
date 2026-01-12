@@ -30,7 +30,7 @@ static int parse_args(int argc, char *argv[], args_t *args) {
     args->next_update = 0;
 
     int opt;
-    while ((opt = getopt(argc, argv, "hl:")) != -1) {
+    while ((opt = getopt(argc, argv, "hu:")) != -1) {
         switch (opt) {
         case 'h':
             print_usage(stdout, argv[0]);
@@ -98,17 +98,38 @@ int main(int argc, char *argv[]) {
     if (args.next_update)
         set_next_update(crl, now + args.next_update);
 
+    X509 *last_cert = NULL;
+
     while (1) {
         X509 *cert = PEM_read_X509(stdin, NULL, NULL, NULL);
         if (!cert)
             break;
 
+        if (last_cert && !X509_issuer_name_cmp(last_cert, cert)) {
+            fprintf(stderr, "issuer name missmatch - skipping cert\n");
+            X509_free(cert);
+            continue;
+        }
+
+        ASN1_TIME *now_asn1 = ASN1_TIME_set(NULL, time(NULL));
         X509_REVOKED *rev = X509_REVOKED_new();
+
         X509_REVOKED_set_serialNumber(rev, X509_get_serialNumber(cert));
+        X509_REVOKED_set_revocationDate(rev, now_asn1);
+
+        ASN1_STRING_free(now_asn1);
 
         X509_CRL_add0_revoked(crl, rev);
 
-        X509_free(cert);
+        if (last_cert)
+            X509_free(last_cert);
+
+        last_cert = cert;
+    }
+
+    if (last_cert) {
+        X509_CRL_set_issuer_name(crl, X509_get_issuer_name(last_cert));
+        X509_free(last_cert);
     }
 
     PEM_write_X509_CRL(stdout, crl);
