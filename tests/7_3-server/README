@@ -1,0 +1,7 @@
+Test disallowed cipher suites for TLSv1.2
+
+Security events:
+- alarm: disallowed TLSv1.2 cipher suite proposed
+
+Expected:
+- connection not established for disallowed suites

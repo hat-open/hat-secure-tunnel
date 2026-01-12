@@ -1,0 +1,10 @@
+* use client with one of the disallowed cipher suites:
+  - TLS_NULL_WITH_NULL_NULL
+  - TLS_*_*_MD5
+  - TLS_*_DES_*
+
+* problem:
+  client does not even start the handshake, but fails with message:
+  "no cipher match". The problem is that disallowed ciphers are not valid for
+  v1.2, and it does not even try the handshake.
+  Question: how to try handshake with disallowed cipher suites?

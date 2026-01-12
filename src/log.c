@@ -80,7 +80,7 @@ static char *get_event_str(security_event_t event) {
         return "alarm: certificate validation: failed verification";
 
     case SECURITY_EVENT_TLS_SHORT_RSA_KEY:
-        return "alarm: insufficient RSA key length";
+        return "alarm: insufficient RSA key length (<2048 bit)";
 
     case SECURITY_EVENT_TLS_SHORT_KEY:
         return "alarm: insufficient key length";

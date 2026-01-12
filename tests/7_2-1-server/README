@@ -1,0 +1,8 @@
+Test mandatory cipher suite for TLSv1.2 TLS_RSA_WITH_AES_128_GCM_SHA256 is
+supported.
+
+Security events:
+- notice: TLS handshake successfully performed
+
+Expected:
+- connection established using the cipher, required by the client.

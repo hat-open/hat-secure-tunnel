@@ -1,0 +1,9 @@
+Test connection is not establish with non-encrypting cipher suite
+TLS_RSA_WITH_NULL_SHA256.
+
+Errors:
+- do handshake error: error:0A0000F4:SSL routines::unexpected message
+
+Expected:
+- connection not established for the cipher suite TLS_RSA_WITH_NULL_SHA256
+  which does not include encription
