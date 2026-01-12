@@ -9,6 +9,7 @@ static void destroy_timer(uv_timer_t *timer);
 static void renegotiate(ssl_t *ssl);
 static int verify_cert(ssl_t *ssl, X509 *cert);
 static X509_CRL *load_crl(char *path);
+static uint64_t get_next_crl_interval(ssl_t *ssl);
 
 
 static void on_timer_close(uv_handle_t *timer) {
@@ -59,8 +60,18 @@ static void on_crl_timer(uv_timer_t *timer) {
 
     ssl->crl = crl;
 
-    if (crl)
-        renegotiate(ssl);
+    if (!crl)
+        return;
+
+    if (uv_timer_start(ssl->crl_timer, on_crl_timer,
+                       get_next_crl_interval(ssl) * 1000,
+                       ssl->conf->crl_interval * 1000) < 0) {
+        log_error("uv_timer_start error");
+        close_channel(ssl->endpoint->channel);
+        return;
+    }
+
+    renegotiate(ssl);
 }
 
 
@@ -462,7 +473,7 @@ static int verify_crl(ssl_t *ssl) {
 
     const ASN1_TIME *next_update = X509_CRL_get0_nextUpdate(ssl->crl);
     if (next_update) {
-        if (ASN1_TIME_cmp_time_t(next_update, time(NULL)) < 0)
+        if (ASN1_TIME_cmp_time_t(next_update, time(NULL)) == -1)
             log_event(SECURITY_EVENT_TLS_CRL_EXP, NULL);
     }
 
@@ -503,7 +514,7 @@ static void renegotiate(ssl_t *ssl) {
 
 
 static X509_CRL *load_crl(char *path) {
-    FILE *fp = fopen(path, "rb");
+    FILE *fp = fopen(path, "r");
     if (!fp) {
         log_error("fopen error");
         return NULL;
@@ -515,6 +526,32 @@ static X509_CRL *load_crl(char *path) {
         log_error("PEM_read_X509_CRL error");
 
     return crl;
+}
+
+
+static uint64_t get_next_crl_interval(ssl_t *ssl) {
+    if (!ssl->conf->crl_interval || !ssl->crl)
+        goto fallback;
+
+    const ASN1_TIME *next_update = X509_CRL_get0_nextUpdate(ssl->crl);
+    if (!next_update)
+        goto fallback;
+
+    int pday, psec;
+    if (ASN1_TIME_diff(&pday, &psec, NULL, next_update) != 1)
+        goto fallback;
+
+    if (pday < 0 || psec < 0 || (pday == 0 && psec == 0))
+        goto fallback;
+
+    uint64_t interval = (uint64_t)pday * 3600 + psec;
+    if (interval > ssl->conf->crl_interval)
+        goto fallback;
+
+    return interval;
+
+fallback:
+    return ssl->conf->crl_interval;
 }
 
 
@@ -595,6 +632,14 @@ ssl_ctx_t *create_ssl_ctx(endpoint_type_t type, ssl_conf_t *conf) {
 
     SSL_CTX_set_post_handshake_auth(ctx->ctx, 0);
 
+    // X509_VERIFY_PARAM *verify_param = SSL_CTX_get0_param(ctx->ctx);
+    // unsigned long verify_flags = X509_VERIFY_PARAM_get_flags(verify_param);
+    // if (X509_VERIFY_PARAM_set_flags(verify_param, X509_V_FLAG_CRL_CHECK) !=
+    // 1) {
+    //     log_error("X509_VERIFY_PARAM_set_flags error");
+    //     goto error;
+    // }
+
     int mode = SSL_VERIFY_PEER | SSL_VERIFY_FAIL_IF_NO_PEER_CERT;
     SSL_CTX_set_verify(ctx->ctx, mode, on_verify);
 
@@ -625,12 +670,6 @@ ssl_ctx_t *create_ssl_ctx(endpoint_type_t type, ssl_conf_t *conf) {
 
     // void X509_STORE_set_get_crl(X509_STORE *ctx, X509_STORE_CTX_get_crl_fn
     // get_crl);
-
-    // X509_VERIFY_PARAM *param = X509_VERIFY_PARAM_new();
-    // X509_VERIFY_PARAM_set_flags(param, X509_V_FLAG_CRL_CHECK);
-    // SSL_CTX_set1_param(ctx->ctx, param);
-    // X509_STORE_set1_param(store, param);
-    // X509_VERIFY_PARAM_free(param);
 
     return ctx;
 
@@ -828,7 +867,7 @@ void process_ssl(ssl_t *ssl) {
             if (ssl->conf->crl_interval &&
                 !uv_is_active((uv_handle_t *)ssl->crl_timer)) {
                 if (uv_timer_start(ssl->crl_timer, on_crl_timer,
-                                   ssl->conf->crl_interval * 1000,
+                                   get_next_crl_interval(ssl) * 1000,
                                    ssl->conf->crl_interval * 1000) < 0) {
                     log_error("uv_timer_start error");
                     close_channel(ssl->endpoint->channel);
