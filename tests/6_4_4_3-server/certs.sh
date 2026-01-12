@@ -27,5 +27,14 @@ $OPENSSL3 req -batch -x509 -noenc \
           -days $duration \
           -CA $DATA_PATH/ca.cert \
           -CAkey $DATA_PATH/ca.key \
-          -keyout $DATA_PATH/client.key \
-          -out $DATA_PATH/client.cert
+          -keyout $DATA_PATH/client1.key \
+          -out $DATA_PATH/client1.cert
+
+$OPENSSL3 req -batch -x509 -noenc \
+          -newkey $key_type \
+          -days $duration \
+          -CA $DATA_PATH/ca.cert \
+          -CAkey $DATA_PATH/ca.key \
+          -keyout $DATA_PATH/client2.key \
+          -out $DATA_PATH/client2.cert
+

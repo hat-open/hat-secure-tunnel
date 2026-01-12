@@ -5,4 +5,5 @@ Security events:
   CA not available
 
 Expected:
-- connection closed
+- connection with certificate included in allowed conf remains open (client1)
+- connection with certificate not included in allowed conf is closed (client2)

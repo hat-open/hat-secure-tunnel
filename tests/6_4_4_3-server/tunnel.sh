@@ -7,9 +7,10 @@ RUN_PATH=$(dirname "$(realpath "$0")")
 
 cd $RUN_PATH
 
-# cert_sn=$(openssl x509 -noout -serial -in $DATA_PATH/client.cert)
-cert_sn=$(openssl x509 -noout -serial -in $DATA_PATH/tunnel.cert)
-cert_sn=${cert_sn#serial=}
+
+cert_sn() {
+    $OPENSSL3 x509 -noout -serial -in $1 | sed 's/^serial=//'
+}
 
 cat >$DATA_PATH/conf.json <<EOF
 {
@@ -22,7 +23,7 @@ cat >$DATA_PATH/conf.json <<EOF
                     "cert_path": "$DATA_PATH/tunnel.cert",
                     "key_path": "$DATA_PATH/tunnel.key",
                     "ca_path": "$DATA_PATH/ca.cert",
-                    "allowed_cert_sn": ["$cert_sn"]
+                    "allowed_cert_sn": ["$(cert_sn $DATA_PATH/client1.cert)"]
                 }
             },
             "client": {
