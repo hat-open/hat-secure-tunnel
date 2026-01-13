@@ -320,7 +320,8 @@ static void process_handshake_error(ssl_t *ssl) {
     int error_reason = ERR_GET_REASON(error);
 
     if (error_lib == ERR_LIB_SSL) {
-        if (error_reason == SSL_R_UNSUPPORTED_PROTOCOL) {
+        if (error_reason == SSL_R_UNSUPPORTED_PROTOCOL ||
+            error_reason == SSL_R_VERSION_TOO_LOW) {
             int client_version = SSL_client_version(ssl->ssl);
 
             if (client_version == TLS1_VERSION) {
