@@ -1,0 +1,4 @@
+
+archlinux requirements:
+- musl
+- kernel-headers-musl
