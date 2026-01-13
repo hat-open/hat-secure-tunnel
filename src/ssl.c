@@ -338,6 +338,9 @@ static void process_handshake_error(ssl_t *ssl) {
 
         } else if (error_reason == SSL_R_PEER_DID_NOT_RETURN_A_CERTIFICATE) {
             log_event(SECURITY_EVENT_TLS_NO_PEER_CERT, NULL);
+
+        } else if (error_reason == SSL_R_NO_SHARED_CIPHER) {
+            log_event(SECURITY_EVENT_TLS_DISALLOWED_CIPHER, NULL);
         }
     }
 }

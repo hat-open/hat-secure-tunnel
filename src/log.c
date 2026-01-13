@@ -50,6 +50,9 @@ static char *get_event_str(security_event_t event) {
     case SECURITY_EVENT_TLS_SESSION_CLOSED_REV:
         return "alarm: session terminated due to revoked certificate";
 
+    case SECURITY_EVENT_TLS_DISALLOWED_CIPHER:
+        return "alarm: disallowed TLSv1.2 cipher suite proposed";
+
     case SECURITY_EVENT_TLS_CERT_SIZE_MISMATCH:
         return "alarm: TLS certificate size exceeded";
 

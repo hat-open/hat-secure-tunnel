@@ -2,8 +2,8 @@ Test connection is not established for cipher suite
 TLS_RSA_WITH_AES_128_GCM_SHA256, not listed among supported ciphers for
 TLSv1.2.
 
-Errors:
-- do handshake error: error:0A0000C1:SSL routines::no shared cipher
+Security events:
+- alarm: disallowed TLSv1.2 cipher suite proposed
 
 Expected:
 - connection not established for the cipher suite required by the client.
