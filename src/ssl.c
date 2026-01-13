@@ -593,14 +593,14 @@ ssl_ctx_t *create_ssl_ctx(endpoint_type_t type, ssl_conf_t *conf) {
 
     uint64_t result_options = SSL_CTX_set_options(ctx->ctx, options);
     if ((result_options & options) != options)
-        log_warning("SSL_CTX_set_options result diferent from argument");
+        log_warning("SSL_CTX_set_options result different from argument");
 
-    if (SSL_CTX_set_cipher_list(ctx->ctx, CHIPER_LIST_V1_2) != 1) {
+    if (SSL_CTX_set_cipher_list(ctx->ctx, CIPHER_LIST_V1_2) != 1) {
         log_error("SSL_CTX_set_cipher_list error");
         goto error;
     }
 
-    if (SSL_CTX_set_ciphersuites(ctx->ctx, CHIPER_LIST_V1_3) != 1) {
+    if (SSL_CTX_set_ciphersuites(ctx->ctx, CIPHER_LIST_V1_3) != 1) {
         log_error("SSL_CTX_set_ciphersuites error");
         goto error;
     }
@@ -758,7 +758,7 @@ ssl_t *create_ssl(endpoint_t *endpoint, ssl_close_cb_t close_cb) {
     long mode = SSL_MODE_ACCEPT_MOVING_WRITE_BUFFER | SSL_MODE_AUTO_RETRY;
     long result_mode = SSL_set_mode(ssl->ssl, mode);
     if (result_mode != mode)
-        log_warning("SSL_set_mode result diferent from argument");
+        log_warning("SSL_set_mode result different from argument");
 
     if (endpoint->type == ENDPOINT_TYPE_CLIENT) {
         if (endpoint->channel->mapping->client_session)
