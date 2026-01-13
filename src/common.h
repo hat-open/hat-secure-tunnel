@@ -14,7 +14,7 @@
 #define BUFFER_SIZE 1024
 
 #define CIPHER_LIST_V1_2                                                         \
-    "AES128-GCM-SHA256:"             /*TLS_RSA_WITH_AES_128_GCM_SHA256*/         \
+    "AES128-SHA256:"                 /*TLS_RSA_WITH_AES_128_CBC_SHA256*/         \
     "DHE-RSA-AES128-GCM-SHA256:"     /*TLS_DHE_RSA_WITH_AES_128_GCM_SHA256*/     \
     "DHE-RSA-AES256-GCM-SHA384:"     /*TLS_DHE_RSA_WITH_AES_256_GCM_SHA384*/     \
     "ECDHE-RSA-AES128-GCM-SHA256:"   /*TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256*/   \
