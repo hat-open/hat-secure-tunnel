@@ -1,9 +1,13 @@
-Test connection is not established for cipher suite
-TLS_RSA_WITH_AES_128_GCM_SHA256, not listed among supported ciphers for
-TLSv1.2.
+Test connection is not established for the cipher suite
+TLS_RSA_WITH_AES_128_GCM_SHA256.
+
+This cipher suite is not listed as supported for TLSv1.2. This implementation
+considers this cipher suite as disallowed, although it is not mentioned in the
+standard (7.3) as explicitly disallowed. Reason is: the standard says the list
+of disallowed cipher suites is not limited.
 
 Security events:
 - alarm: disallowed TLSv1.2 cipher suite proposed
 
 Expected:
-- connection not established for the cipher suite required by the client.
+- connection is not established for the cipher suite required by the client

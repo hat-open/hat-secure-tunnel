@@ -1,7 +1,11 @@
-Test disallowed cipher suites for TLSv1.2
+Test disallowed cipher suite for TLSv1.2 TLS_RSA_WITH_RC4_128_MD5.
+The following cipher suites are disallowed by the standard (but not limited to):
+  - TLS_NULL_WITH_NULL_NULL
+  - TLS_*_*_MD5
+  - TLS_*_DES_*
 
 Security events:
 - alarm: disallowed TLSv1.2 cipher suite proposed
 
 Expected:
-- connection not established for disallowed suites
+- connection is not established for the cipher suite required by the client

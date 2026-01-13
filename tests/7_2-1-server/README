@@ -5,4 +5,4 @@ Security events:
 - notice: TLS handshake successfully performed
 
 Expected:
-- connection established using the cipher, required by the client.
+- connection is established using the cipher suite required by the client
