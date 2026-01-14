@@ -331,6 +331,11 @@ app_conf_t *create_app_conf(char *path) {
         goto error;
     }
 
+    if (json_array_size(mappings_json) < 1) {
+        log_error("invalid number of mappings supplied in the config (<1)");
+        goto error;
+    }
+
     size_t i;
     json_t *mapping_json;
     mapping_conf_t **mapping_slot = &(app->mappings);
