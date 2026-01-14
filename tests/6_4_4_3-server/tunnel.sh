@@ -20,10 +20,14 @@ cat >$DATA_PATH/conf.json <<EOF
                 "host": "127.0.0.1",
                 "port": $TUNNEL_PORT,
                 "ssl": {
-                    "cert_path": "$DATA_PATH/tunnel.cert",
-                    "key_path": "$DATA_PATH/tunnel.key",
-                    "ca_path": "$DATA_PATH/ca.cert",
-                    "allowed_cert_sn": ["$(cert_sn $DATA_PATH/client1.cert)"]
+                    "local_cert": {
+                        "cert_path": "$DATA_PATH/tunnel.cert",
+                        "key_path": "$DATA_PATH/tunnel.key"
+                    },
+                    "remote_cert": {
+                        "ca_path": "$DATA_PATH/ca.cert",
+                        "allowed_cert_sn": ["$(cert_sn $DATA_PATH/client1.cert)"]
+                    }
                 }
             },
             "client": {

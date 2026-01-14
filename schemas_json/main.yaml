@@ -38,28 +38,45 @@ $defs:
                 type: integer
             ssl:
                 type: object
-                required:
-                    - cert_path
-                    - key_path
-                    - ca_path
                 properties:
-                    cert_path:
-                        type: string
-                    key_path:
-                        type: string
-                    ca_path:
-                        type: string
-                    password:
-                        type: string
-                    crl_path:
-                        type: string
+                    local_cert:
+                        type: object
+                        description: |
+                            required in case of server endpoint
+                        required:
+                            - cert_path
+                            - key_path
+                        properties:
+                            cert_path:
+                                type: string
+                            key_path:
+                                type: string
+                            password:
+                                type: string
+                    remote_cert:
+                        type: object
+                        required:
+                            - ca_path
+                        properties:
+                            ca_path:
+                                type: string
+                            allowed_cert_sn:
+                                type: array
+                                items:
+                                    type: string
+                            max_cert_len:
+                                type: integer
+                                default: 8192
+                            crl:
+                                type: object
+                                required:
+                                    - path
+                                properties:
+                                    path:
+                                        type: string
+                                    update_interval:
+                                        type: integer
                     renegotiate_interval:
-                        type: integer
-                    crl_interval:
                         type: integer
                     session_cache_timeout:
                         type: integer
-                    allowed_cert_sn:
-                        type: array
-                        items:
-                            type: string

@@ -1,15 +1,238 @@
 #include "common.h"
 
 
-static void destroy_ssl_conf(ssl_conf_t *ssl) {
-    if (ssl->allowed_cert_sn) {
-        for (size_t i = 0; i < ssl->allowed_cert_sn_len; ++i) {
-            if (ssl->allowed_cert_sn[i])
-                BN_free(ssl->allowed_cert_sn[i]);
+static void destroy_crl_conf(crl_conf_t *crl) { free(crl); }
+
+
+static crl_conf_t *create_crl_conf(json_t *json) {
+    crl_conf_t *crl = malloc(sizeof(crl_conf_t));
+    if (!crl) {
+        log_error("malloc error");
+        goto error;
+    }
+
+    crl->path = NULL;
+    crl->update_interval = 0;
+
+    if (!json_is_object(json)) {
+        log_error("invalid crl type");
+        goto error;
+    }
+
+    json_t *path_json = json_object_get(json, "path");
+    if (!path_json) {
+        log_error("crl missing path");
+        goto error;
+    }
+
+    crl->path = (char *)json_string_value(path_json);
+    if (!crl->path) {
+        log_error("invalid path");
+        goto error;
+    }
+
+    json_t *update_interval_json = json_object_get(json, "update_interval");
+    if (update_interval_json) {
+        json_int_t update_interval = json_integer_value(update_interval_json);
+        if (update_interval < 1) {
+            log_error("invalid update_interval");
+            goto error;
         }
 
-        free(ssl->allowed_cert_sn);
+        crl->update_interval = update_interval;
     }
+
+    return crl;
+
+error:
+    if (crl)
+        destroy_crl_conf(crl);
+
+    return NULL;
+}
+
+
+static void destroy_local_cert_conf(local_cert_conf_t *local_cert) {
+    free(local_cert);
+}
+
+
+static local_cert_conf_t *create_local_cert_conf(json_t *json) {
+    local_cert_conf_t *local_cert = malloc(sizeof(local_cert_conf_t));
+    if (!local_cert) {
+        log_error("malloc error");
+        goto error;
+    }
+
+    local_cert->cert_path = NULL;
+    local_cert->key_path = NULL;
+    local_cert->password = NULL;
+
+    if (!json_is_object(json)) {
+        log_error("invalid local_cert type");
+        goto error;
+    }
+
+    json_t *cert_path_json = json_object_get(json, "cert_path");
+    if (!cert_path_json) {
+        log_error("local_cert missing cert_path");
+        goto error;
+    }
+
+    local_cert->cert_path = (char *)json_string_value(cert_path_json);
+    if (!local_cert->cert_path) {
+        log_error("invalid cert_path");
+        goto error;
+    }
+
+    json_t *key_path_json = json_object_get(json, "key_path");
+    if (!key_path_json) {
+        log_error("local_cert missing key_path");
+        goto error;
+    }
+
+    local_cert->key_path = (char *)json_string_value(key_path_json);
+    if (!local_cert->key_path) {
+        log_error("invalid key_path");
+        goto error;
+    }
+
+    json_t *password_json = json_object_get(json, "password");
+    if (password_json) {
+        local_cert->password = (char *)json_string_value(password_json);
+        if (!local_cert->password) {
+            log_error("invalid password");
+            goto error;
+        }
+    }
+
+    return local_cert;
+
+error:
+    if (local_cert)
+        destroy_local_cert_conf(local_cert);
+
+    return NULL;
+}
+
+
+static void destroy_remote_cert_conf(remote_cert_conf_t *remote_cert) {
+    if (remote_cert->allowed_cert_sn) {
+        for (size_t i = 0; i < remote_cert->allowed_cert_sn_len; ++i) {
+            if (remote_cert->allowed_cert_sn[i])
+                BN_free(remote_cert->allowed_cert_sn[i]);
+        }
+
+        free(remote_cert->allowed_cert_sn);
+    }
+
+    if (remote_cert->crl)
+        destroy_crl_conf(remote_cert->crl);
+
+    free(remote_cert);
+}
+
+
+static remote_cert_conf_t *create_remote_cert_conf(json_t *json) {
+    remote_cert_conf_t *remote_cert = malloc(sizeof(remote_cert_conf_t));
+    if (!remote_cert) {
+        log_error("malloc error");
+        goto error;
+    }
+
+    remote_cert->ca_path = NULL;
+    remote_cert->allowed_cert_sn = NULL;
+    remote_cert->allowed_cert_sn_len = 0;
+    remote_cert->max_cert_len = 8192;
+    remote_cert->crl = NULL;
+
+    if (!json_is_object(json)) {
+        log_error("invalid remote_cert type");
+        goto error;
+    }
+
+    json_t *ca_path_json = json_object_get(json, "ca_path");
+    if (!ca_path_json) {
+        log_error("remote_cert missing ca_path");
+        goto error;
+    }
+
+    remote_cert->ca_path = (char *)json_string_value(ca_path_json);
+    if (!remote_cert->ca_path) {
+        log_error("invalid ca_path");
+        goto error;
+    }
+
+    json_t *allowed_cert_sn_json = json_object_get(json, "allowed_cert_sn");
+    if (allowed_cert_sn_json) {
+        if (!json_is_array(allowed_cert_sn_json)) {
+            log_error("invalid allowed_cert_sn type");
+            goto error;
+        }
+
+        remote_cert->allowed_cert_sn_len =
+            json_array_size(allowed_cert_sn_json);
+
+        remote_cert->allowed_cert_sn =
+            calloc(remote_cert->allowed_cert_sn_len, sizeof(BIGNUM *));
+        if (!remote_cert->allowed_cert_sn) {
+            log_error("malloc error");
+            goto error;
+        }
+
+        size_t index;
+        json_t *value;
+        json_array_foreach(allowed_cert_sn_json, index, value) {
+            char *value_str = (char *)json_string_value(value);
+            if (!value_str) {
+                log_error("invalid allowed_cert_sn");
+                goto error;
+            }
+
+            if (BN_hex2bn(&(remote_cert->allowed_cert_sn[index]), value_str) ==
+                0) {
+                log_error("invalid allowed_cert_sn");
+                goto error;
+            }
+        }
+    }
+
+    json_t *max_cert_len_json = json_object_get(json, "max_cert_len");
+    if (max_cert_len_json) {
+        json_int_t max_cert_len = json_integer_value(max_cert_len_json);
+        if (max_cert_len < 1) {
+            log_error("invalid max_cert_len");
+            goto error;
+        }
+
+        remote_cert->max_cert_len = max_cert_len;
+    }
+
+    json_t *crl_json = json_object_get(json, "crl");
+    if (crl_json) {
+        remote_cert->crl = create_crl_conf(crl_json);
+        if (!remote_cert->crl) {
+            log_error("create_crl_conf error");
+            goto error;
+        }
+    }
+
+    return remote_cert;
+
+error:
+    if (remote_cert)
+        destroy_remote_cert_conf(remote_cert);
+
+    return NULL;
+}
+
+
+static void destroy_ssl_conf(ssl_conf_t *ssl) {
+    if (ssl->local_cert)
+        destroy_local_cert_conf(ssl->local_cert);
+
+    if (ssl->remote_cert)
+        destroy_remote_cert_conf(ssl->remote_cert);
 
     free(ssl);
 }
@@ -22,72 +245,30 @@ static ssl_conf_t *create_ssl_conf(json_t *json) {
         goto error;
     }
 
-    ssl->cert_path = NULL;
-    ssl->key_path = NULL;
-    ssl->ca_path = NULL;
-    ssl->password = NULL;
-    ssl->crl_path = NULL;
+    ssl->local_cert = NULL;
+    ssl->remote_cert = NULL;
     ssl->renegotiate_interval = 0;
-    ssl->crl_interval = 0;
     ssl->session_cache_timeout = 0;
-    ssl->allowed_cert_sn = NULL;
-    ssl->allowed_cert_sn_len = 0;
 
     if (!json_is_object(json)) {
         log_error("invalid ssl type");
         goto error;
     }
 
-    json_t *cert_path_json = json_object_get(json, "cert_path");
-    if (!cert_path_json) {
-        log_error("endpoint missing cert_path");
-        goto error;
-    }
-
-    ssl->cert_path = (char *)json_string_value(cert_path_json);
-    if (!ssl->cert_path) {
-        log_error("invalid cert_path");
-        goto error;
-    }
-
-    json_t *key_path_json = json_object_get(json, "key_path");
-    if (!key_path_json) {
-        log_error("endpoint missing key_path");
-        goto error;
-    }
-
-    ssl->key_path = (char *)json_string_value(key_path_json);
-    if (!ssl->key_path) {
-        log_error("invalid key_path");
-        goto error;
-    }
-
-    json_t *ca_path_json = json_object_get(json, "ca_path");
-    if (!ca_path_json) {
-        log_error("endpoint missing ca_path");
-        goto error;
-    }
-
-    ssl->ca_path = (char *)json_string_value(ca_path_json);
-    if (!ssl->ca_path) {
-        log_error("invalid ca_path");
-        goto error;
-    }
-
-    json_t *password_json = json_object_get(json, "password");
-    if (password_json) {
-        ssl->password = (char *)json_string_value(password_json);
-        if (!ssl->password) {
-            log_error("invalid password");
+    json_t *local_cert_json = json_object_get(json, "local_cert");
+    if (local_cert_json) {
+        ssl->local_cert = create_local_cert_conf(local_cert_json);
+        if (!ssl->local_cert) {
+            log_error("create_local_cert_conf error");
             goto error;
         }
     }
 
-    json_t *crl_path_json = json_object_get(json, "crl_path");
-    if (crl_path_json) {
-        ssl->crl_path = (char *)json_string_value(crl_path_json);
-        if (!ssl->crl_path) {
-            log_error("invalid crl_path");
+    json_t *remote_cert_json = json_object_get(json, "remote_cert");
+    if (remote_cert_json) {
+        ssl->remote_cert = create_remote_cert_conf(remote_cert_json);
+        if (!ssl->remote_cert) {
+            log_error("create_remote_cert_conf error");
             goto error;
         }
     }
@@ -105,17 +286,6 @@ static ssl_conf_t *create_ssl_conf(json_t *json) {
         ssl->renegotiate_interval = renegotiate_interval;
     }
 
-    json_t *crl_interval_json = json_object_get(json, "crl_interval");
-    if (crl_interval_json) {
-        json_int_t crl_interval = json_integer_value(crl_interval_json);
-        if (crl_interval < 1) {
-            log_error("invalid crl_interval");
-            goto error;
-        }
-
-        ssl->crl_interval = crl_interval;
-    }
-
     json_t *session_cache_timeout_json =
         json_object_get(json, "session_cache_timeout");
     if (session_cache_timeout_json) {
@@ -129,36 +299,6 @@ static ssl_conf_t *create_ssl_conf(json_t *json) {
         ssl->session_cache_timeout = session_cache_timeout;
     }
 
-    json_t *allowed_cert_sn_json = json_object_get(json, "allowed_cert_sn");
-    if (allowed_cert_sn_json) {
-        if (!json_is_array(allowed_cert_sn_json)) {
-            log_error("invalid allowed_cert_sn type");
-            goto error;
-        }
-
-        ssl->allowed_cert_sn_len = json_array_size(allowed_cert_sn_json);
-
-        ssl->allowed_cert_sn = calloc(ssl->allowed_cert_sn_len, sizeof(char *));
-        if (!ssl->allowed_cert_sn) {
-            log_error("malloc error");
-            goto error;
-        }
-
-        size_t index;
-        json_t *value;
-        json_array_foreach(allowed_cert_sn_json, index, value) {
-            char *value_str = (char *)json_string_value(value);
-            if (!value_str) {
-                log_error("invalid allowed_cert_sn");
-                goto error;
-            }
-
-            if (BN_hex2bn(&(ssl->allowed_cert_sn[index]), value_str) == 0) {
-                log_error("invalid allowed_cert_sn");
-                goto error;
-            }
-        }
-    }
 
     return ssl;
 
@@ -274,6 +414,11 @@ static mapping_conf_t *create_mapping_conf(json_t *json) {
     mapping->server = create_endpoint_conf(server_json);
     if (!mapping->server) {
         log_error("create_endpoint_conf error");
+        goto error;
+    }
+
+    if (mapping->server->ssl && !mapping->server->ssl->local_cert) {
+        log_error("server endpoint requires local_cert");
         goto error;
     }
 

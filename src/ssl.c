@@ -9,7 +9,7 @@ static void destroy_timer(uv_timer_t *timer);
 static void renegotiate(ssl_t *ssl);
 static int verify_cert(ssl_t *ssl, X509 *cert);
 static X509_CRL *load_crl(char *path);
-static uint64_t get_next_crl_interval(ssl_t *ssl);
+static uint64_t get_next_crl_update_interval(ssl_t *ssl);
 
 
 static void on_timer_close(uv_handle_t *timer) {
@@ -20,12 +20,12 @@ static void on_timer_close(uv_handle_t *timer) {
     if (ssl->renegotiate_timer == (uv_timer_t *)timer)
         ssl->renegotiate_timer = NULL;
 
-    if (ssl->crl_timer == (uv_timer_t *)timer)
-        ssl->crl_timer = NULL;
+    if (ssl->crl_update_timer == (uv_timer_t *)timer)
+        ssl->crl_update_timer = NULL;
 
     destroy_timer((uv_timer_t *)timer);
 
-    if (ssl->close_cb && !ssl->renegotiate_timer && !ssl->crl_timer)
+    if (ssl->close_cb && !ssl->renegotiate_timer && !ssl->crl_update_timer)
         ssl->close_cb(ssl);
 }
 
@@ -38,15 +38,12 @@ static void on_renegotiate_timer(uv_timer_t *timer) {
 }
 
 
-static void on_crl_timer(uv_timer_t *timer) {
-    log_debug("on_crl_timer");
+static void on_crl_update_timer(uv_timer_t *timer) {
+    log_debug("on_crl_update_timer");
 
     ssl_t *ssl = timer->data;
 
-    if (!ssl->conf->crl_path)
-        return;
-
-    X509_CRL *crl = load_crl(ssl->conf->crl_path);
+    X509_CRL *crl = load_crl(ssl->conf->remote_cert->crl->path);
     if (!crl)
         log_event(SECURITY_EVENT_TLS_NO_CRL, NULL);
 
@@ -63,9 +60,10 @@ static void on_crl_timer(uv_timer_t *timer) {
     if (!crl)
         return;
 
-    if (uv_timer_start(ssl->crl_timer, on_crl_timer,
-                       get_next_crl_interval(ssl) * 1000,
-                       ssl->conf->crl_interval * 1000) < 0) {
+    if (uv_timer_start(ssl->crl_update_timer, on_crl_update_timer,
+                       get_next_crl_update_interval(ssl) * 1000,
+                       ssl->conf->remote_cert->crl->update_interval * 1000) <
+        0) {
         log_error("uv_timer_start error");
         close_channel(ssl->endpoint->channel);
         return;
@@ -348,7 +346,7 @@ static void process_handshake_error(ssl_t *ssl) {
 
 
 static int verify_cert(ssl_t *ssl, X509 *cert) {
-    if (ssl->conf->allowed_cert_sn) {
+    if (ssl->conf->remote_cert->allowed_cert_sn) {
         ASN1_INTEGER *cert_sn_asn1 = X509_get_serialNumber(cert);
         if (!cert_sn_asn1) {
             log_error("X509_get_serialNumber error");
@@ -363,8 +361,10 @@ static int verify_cert(ssl_t *ssl, X509 *cert) {
 
         bool allowed_sn = false;
 
-        for (size_t i = 0; i < ssl->conf->allowed_cert_sn_len; ++i) {
-            if (BN_cmp(ssl->conf->allowed_cert_sn[i], cert_sn_bn) == 0) {
+        for (size_t i = 0; i < ssl->conf->remote_cert->allowed_cert_sn_len;
+             ++i) {
+            if (BN_cmp(ssl->conf->remote_cert->allowed_cert_sn[i],
+                       cert_sn_bn) == 0) {
                 allowed_sn = true;
                 break;
             }
@@ -387,7 +387,7 @@ static int verify_cert(ssl_t *ssl, X509 *cert) {
 
     OPENSSL_free(cert_bytes);
 
-    if (cert_len > 8192) {
+    if (cert_len > ssl->conf->remote_cert->max_cert_len) {
         log_event(SECURITY_EVENT_TLS_CERT_SIZE_MISMATCH, "%d", cert_len);
         return 0;
     }
@@ -533,8 +533,8 @@ static X509_CRL *load_crl(char *path) {
 }
 
 
-static uint64_t get_next_crl_interval(ssl_t *ssl) {
-    if (!ssl->conf->crl_interval || !ssl->crl)
+static uint64_t get_next_crl_update_interval(ssl_t *ssl) {
+    if (!ssl->conf->remote_cert->crl->update_interval || !ssl->crl)
         goto fallback;
 
     const ASN1_TIME *next_update = X509_CRL_get0_nextUpdate(ssl->crl);
@@ -549,13 +549,13 @@ static uint64_t get_next_crl_interval(ssl_t *ssl) {
         goto fallback;
 
     uint64_t interval = (uint64_t)pday * 3600 + psec;
-    if (interval > ssl->conf->crl_interval)
+    if (interval > ssl->conf->remote_cert->crl->update_interval)
         goto fallback;
 
     return interval;
 
 fallback:
-    return ssl->conf->crl_interval;
+    return ssl->conf->remote_cert->crl->update_interval;
 }
 
 
@@ -636,44 +636,55 @@ ssl_ctx_t *create_ssl_ctx(endpoint_type_t type, ssl_conf_t *conf) {
 
     SSL_CTX_set_post_handshake_auth(ctx->ctx, 0);
 
-    // X509_VERIFY_PARAM *verify_param = SSL_CTX_get0_param(ctx->ctx);
-    // unsigned long verify_flags = X509_VERIFY_PARAM_get_flags(verify_param);
-    // if (X509_VERIFY_PARAM_set_flags(verify_param, X509_V_FLAG_CRL_CHECK) !=
-    // 1) {
-    //     log_error("X509_VERIFY_PARAM_set_flags error");
-    //     goto error;
-    // }
+    if (conf->remote_cert) {
+        int mode = SSL_VERIFY_PEER | SSL_VERIFY_FAIL_IF_NO_PEER_CERT;
+        SSL_CTX_set_verify(ctx->ctx, mode, on_verify);
 
-    int mode = SSL_VERIFY_PEER | SSL_VERIFY_FAIL_IF_NO_PEER_CERT;
-    SSL_CTX_set_verify(ctx->ctx, mode, on_verify);
+        if (SSL_CTX_load_verify_locations(ctx->ctx, conf->remote_cert->ca_path,
+                                          NULL) != 1) {
+            log_error("SSL_CTX_load_verify_locations error");
+            goto error;
+        }
 
-    if (SSL_CTX_load_verify_locations(ctx->ctx, conf->ca_path, NULL) != 1) {
-        log_error("SSL_CTX_load_verify_locations error");
-        goto error;
+        // X509_VERIFY_PARAM *verify_param = SSL_CTX_get0_param(ctx->ctx);
+        // unsigned long verify_flags =
+        // X509_VERIFY_PARAM_get_flags(verify_param); if
+        // (X509_VERIFY_PARAM_set_flags(verify_param, X509_V_FLAG_CRL_CHECK) !=
+        // 1) {
+        //     log_error("X509_VERIFY_PARAM_set_flags error");
+        //     goto error;
+        // }
+
+        // void X509_STORE_set_get_crl(X509_STORE *ctx,
+        // X509_STORE_CTX_get_crl_fn get_crl);
+
+    } else {
+        SSL_CTX_set_verify(ctx->ctx, SSL_VERIFY_NONE, NULL);
     }
 
-    SSL_CTX_set_default_passwd_cb(ctx->ctx, on_password);
-    SSL_CTX_set_default_passwd_cb_userdata(ctx->ctx, conf->password);
+    if (conf->local_cert) {
+        SSL_CTX_set_default_passwd_cb(ctx->ctx, on_password);
+        SSL_CTX_set_default_passwd_cb_userdata(ctx->ctx,
+                                               conf->local_cert->password);
 
-    if (SSL_CTX_use_certificate_chain_file(ctx->ctx, conf->cert_path) != 1) {
-        log_error("SSL_CTX_use_certificate_chain_file error");
-        log_event(SECURITY_EVENT_TLS_NO_LOCAL_CERT, NULL);
-        goto error;
+        if (SSL_CTX_use_certificate_chain_file(
+                ctx->ctx, conf->local_cert->cert_path) != 1) {
+            log_error("SSL_CTX_use_certificate_chain_file error");
+            log_event(SECURITY_EVENT_TLS_NO_LOCAL_CERT, NULL);
+            goto error;
+        }
+
+        if (SSL_CTX_use_PrivateKey_file(ctx->ctx, conf->local_cert->key_path,
+                                        SSL_FILETYPE_PEM) != 1) {
+            log_error("SSL_CTX_use_PrivateKey_file error");
+            goto error;
+        }
+
+        if (SSL_CTX_check_private_key(ctx->ctx) != 1) {
+            log_error("SSL_CTX_check_private_key error");
+            goto error;
+        }
     }
-
-    if (SSL_CTX_use_PrivateKey_file(ctx->ctx, conf->key_path,
-                                    SSL_FILETYPE_PEM) != 1) {
-        log_error("SSL_CTX_use_PrivateKey_file error");
-        goto error;
-    }
-
-    if (SSL_CTX_check_private_key(ctx->ctx) != 1) {
-        log_error("SSL_CTX_check_private_key error");
-        goto error;
-    }
-
-    // void X509_STORE_set_get_crl(X509_STORE *ctx, X509_STORE_CTX_get_crl_fn
-    // get_crl);
 
     return ctx;
 
@@ -708,7 +719,7 @@ ssl_t *create_ssl(endpoint_t *endpoint, ssl_close_cb_t close_cb) {
     ssl->close_cb = NULL;
     ssl->conf = endpoint->conf->ssl;
     ssl->renegotiate_timer = NULL;
-    ssl->crl_timer = NULL;
+    ssl->crl_update_timer = NULL;
     ssl->input_bio = NULL;
     ssl->output_bio = NULL;
     ssl->ssl = NULL;
@@ -722,8 +733,8 @@ ssl_t *create_ssl(endpoint_t *endpoint, ssl_close_cb_t close_cb) {
         goto error;
     }
 
-    ssl->crl_timer = create_timer(ssl);
-    if (!ssl->crl_timer) {
+    ssl->crl_update_timer = create_timer(ssl);
+    if (!ssl->crl_update_timer) {
         log_error("create timer error");
         goto error;
     }
@@ -771,8 +782,8 @@ ssl_t *create_ssl(endpoint_t *endpoint, ssl_close_cb_t close_cb) {
         SSL_set_accept_state(ssl->ssl);
     }
 
-    if (ssl->conf->crl_path) {
-        ssl->crl = load_crl(ssl->conf->crl_path);
+    if (ssl->conf->remote_cert && ssl->conf->remote_cert->crl) {
+        ssl->crl = load_crl(ssl->conf->remote_cert->crl->path);
         if (!ssl->crl)
             log_event(SECURITY_EVENT_TLS_NO_CRL, NULL);
     }
@@ -785,7 +796,7 @@ error:
     log_ssl_errors();
 
     if (ssl) {
-        if (!ssl->renegotiate_timer && !ssl->crl_timer)
+        if (!ssl->renegotiate_timer && !ssl->crl_update_timer)
             destroy_ssl(ssl);
 
         else
@@ -800,8 +811,8 @@ void close_ssl(ssl_t *ssl) {
     if (ssl->renegotiate_timer)
         close_timer(ssl->renegotiate_timer);
 
-    if (ssl->crl_timer)
-        close_timer(ssl->crl_timer);
+    if (ssl->crl_update_timer)
+        close_timer(ssl->crl_update_timer);
 }
 
 
@@ -847,7 +858,8 @@ void process_ssl(ssl_t *ssl) {
                 return;
             }
 
-            if (!verify_crl(ssl)) {
+            if (ssl->conf->remote_cert && ssl->conf->remote_cert->crl &&
+                !verify_crl(ssl)) {
                 log_error("verify_crl error");
                 close_channel(ssl->endpoint->channel);
                 return;
@@ -868,11 +880,14 @@ void process_ssl(ssl_t *ssl) {
                 }
             }
 
-            if (ssl->conf->crl_interval &&
-                !uv_is_active((uv_handle_t *)ssl->crl_timer)) {
-                if (uv_timer_start(ssl->crl_timer, on_crl_timer,
-                                   get_next_crl_interval(ssl) * 1000,
-                                   ssl->conf->crl_interval * 1000) < 0) {
+            if (ssl->conf->remote_cert && ssl->conf->remote_cert->crl &&
+                ssl->conf->remote_cert->crl->update_interval &&
+                !uv_is_active((uv_handle_t *)ssl->crl_update_timer)) {
+                if (uv_timer_start(
+                        ssl->crl_update_timer, on_crl_update_timer,
+                        get_next_crl_update_interval(ssl) * 1000,
+                        ssl->conf->remote_cert->crl->update_interval * 1000) <
+                    0) {
                     log_error("uv_timer_start error");
                     close_channel(ssl->endpoint->channel);
                     return;

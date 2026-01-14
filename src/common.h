@@ -43,6 +43,9 @@ typedef struct app_conf_t app_conf_t;
 typedef struct mapping_conf_t mapping_conf_t;
 typedef struct endpoint_conf_t endpoint_conf_t;
 typedef struct ssl_conf_t ssl_conf_t;
+typedef struct local_cert_conf_t local_cert_conf_t;
+typedef struct remote_cert_conf_t remote_cert_conf_t;
+typedef struct crl_conf_t crl_conf_t;
 
 typedef struct app_t app_t;
 typedef struct mapping_t mapping_t;
@@ -110,16 +113,29 @@ struct endpoint_conf_t {
 };
 
 struct ssl_conf_t {
+    local_cert_conf_t *local_cert;
+    remote_cert_conf_t *remote_cert;
+    uint64_t renegotiate_interval;
+    uint64_t session_cache_timeout;
+};
+
+struct local_cert_conf_t {
     char *cert_path;
     char *key_path;
-    char *ca_path;
     char *password;
-    char *crl_path;
-    uint64_t renegotiate_interval;
-    uint64_t crl_interval;
-    uint64_t session_cache_timeout;
+};
+
+struct remote_cert_conf_t {
+    char *ca_path;
     BIGNUM **allowed_cert_sn;
     size_t allowed_cert_sn_len;
+    uint64_t max_cert_len;
+    crl_conf_t *crl;
+};
+
+struct crl_conf_t {
+    char *path;
+    uint64_t update_interval;
 };
 
 struct app_t {
@@ -172,7 +188,7 @@ struct ssl_t {
     ssl_close_cb_t close_cb;
     ssl_conf_t *conf;
     uv_timer_t *renegotiate_timer;
-    uv_timer_t *crl_timer;
+    uv_timer_t *crl_update_timer;
     BIO *input_bio;
     BIO *output_bio;
     SSL *ssl;

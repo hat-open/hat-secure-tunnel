@@ -17,10 +17,22 @@ $OPENSSL3 req -batch -x509 -noenc \
 $OPENSSL3 req -batch -x509 -noenc \
           -newkey $key_type \
           -days $duration \
-          -keyout $DATA_PATH/ca_client.key \
-          -out $DATA_PATH/ca_client.cert
+          -keyout $DATA_PATH/ca_client1.key \
+          -out $DATA_PATH/ca_client1.cert
 
-cat $DATA_PATH/ca_tunnel.cert $DATA_PATH/ca_client.cert >$DATA_PATH/ca_all.cert
+$OPENSSL3 req -batch -x509 -noenc \
+          -newkey $key_type \
+          -days $duration \
+          -keyout $DATA_PATH/ca_client2.key \
+          -out $DATA_PATH/ca_client2.cert
+
+$OPENSSL3 req -batch -x509 -noenc \
+          -newkey $key_type \
+          -days $duration \
+          -keyout $DATA_PATH/ca_client3.key \
+          -out $DATA_PATH/ca_client3.cert
+
+cat $DATA_PATH/ca_client1.cert $DATA_PATH/ca_client2.cert >$DATA_PATH/ca_all.cert
 
 $OPENSSL3 req -batch -x509 -noenc \
           -newkey $key_type \
@@ -33,7 +45,23 @@ $OPENSSL3 req -batch -x509 -noenc \
 $OPENSSL3 req -batch -x509 -noenc \
           -newkey $key_type \
           -days $duration \
-          -CA $DATA_PATH/ca_client.cert \
-          -CAkey $DATA_PATH/ca_client.key \
-          -keyout $DATA_PATH/client.key \
-          -out $DATA_PATH/client.cert
+          -CA $DATA_PATH/ca_client1.cert \
+          -CAkey $DATA_PATH/ca_client1.key \
+          -keyout $DATA_PATH/client1.key \
+          -out $DATA_PATH/client1.cert
+
+$OPENSSL3 req -batch -x509 -noenc \
+          -newkey $key_type \
+          -days $duration \
+          -CA $DATA_PATH/ca_client2.cert \
+          -CAkey $DATA_PATH/ca_client2.key \
+          -keyout $DATA_PATH/client2.key \
+          -out $DATA_PATH/client2.cert
+
+$OPENSSL3 req -batch -x509 -noenc \
+          -newkey $key_type \
+          -days $duration \
+          -CA $DATA_PATH/ca_client3.cert \
+          -CAkey $DATA_PATH/ca_client3.key \
+          -keyout $DATA_PATH/client3.key \
+          -out $DATA_PATH/client3.cert
