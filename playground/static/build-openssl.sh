@@ -19,6 +19,6 @@ mkdir -p $SRC_PATH
 tar -xzf $CACHE_PATH/$OPENSSL_FILE -C $SRC_PATH
 
 cd $OPENSSL_DIR
-./Configure --prefix=$BUILD_PATH
+./Configure --prefix=$BUILD_PATH no-shared
 make
 make install

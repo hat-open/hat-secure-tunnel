@@ -20,6 +20,6 @@ tar -xzf $CACHE_PATH/$LIBUV_FILE -C $SRC_PATH
 
 cd $LIBUV_DIR
 sh autogen.sh
-./configure --prefix=$BUILD_PATH
+./configure --prefix=$BUILD_PATH --disable-shared
 make
 make install

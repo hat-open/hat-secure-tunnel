@@ -19,6 +19,6 @@ mkdir -p $SRC_PATH
 tar -xzf $CACHE_PATH/$JANSSON_FILE -C $SRC_PATH
 
 cd $JANSSON_DIR
-./configure --prefix=$BUILD_PATH
+./configure --prefix=$BUILD_PATH --disable-shared
 make
 make install

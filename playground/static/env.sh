@@ -7,4 +7,4 @@ CACHE_PATH=$RUN_PATH/cache
 BUILD_PATH=$RUN_PATH/build
 SRC_PATH=$BUILD_PATH/src
 
-export CC=x86_64-linux-musl-gcc
+export CC=$BUILD_PATH/bin/musl-gcc
