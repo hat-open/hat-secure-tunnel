@@ -2,14 +2,11 @@
 
 ROOT_PATH=$TESTS_PATH/..
 BUILD_PATH=$ROOT_PATH/build
-PLAYGROUND_PATH=$ROOT_PATH/playground
+STATIC_PATH=$ROOT_PATH/static
 
-OPENSSL1_0=openssl-1.0
-OPENSSL1_1=openssl-1.1
-OPENSSL3=openssl
+OPENSSL=$STATIC_PATH/bin/openssl
 
-# TUNNEL=$ROOT_PATH/playground/containers/build/linux/amd64/alpine3.23/hat-iec62351-tunnel
-# TUNNEL=$ROOT_PATH/playground/static/build/bin/hat-iec62351-tunnel
-TUNNEL=$BUILD_PATH/hat-iec62351-tunnel
+# TUNNEL=$BUILD_PATH/hat-iec62351-tunnel
+TUNNEL=$STATIC_PATH/bin/hat-iec62351-tunnel
 
-CREATE_CRL=$PLAYGROUND_PATH/create-crl/create-crl
+CREATE_CRL=$STATIC_PATH/bin/create-crl

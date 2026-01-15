@@ -1,5 +1,6 @@
 /build
+/cache
 /compile_flags.txt
 /config.mk
-/hat-iec62351-tunnel
 /rules.mk
+/static

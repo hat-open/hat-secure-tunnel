@@ -8,30 +8,30 @@ RUN_PATH=$(dirname "$(realpath "$0")")
 duration=3650
 key_type=rsa:2048
 
-$OPENSSL3 req -batch -x509 -noenc \
-          -newkey $key_type \
-          -days $duration \
-          -keyout $DATA_PATH/ca_tunel.key \
-          -out $DATA_PATH/ca_tunel.cert
+$OPENSSL req -batch -x509 -noenc \
+             -newkey $key_type \
+             -days $duration \
+             -keyout $DATA_PATH/ca_tunel.key \
+             -out $DATA_PATH/ca_tunel.cert
 
-$OPENSSL3 req -batch -x509 -noenc \
-          -newkey $key_type \
-          -days $duration \
-          -keyout $DATA_PATH/ca_client.key \
-          -out $DATA_PATH/ca_client.cert
+$OPENSSL req -batch -x509 -noenc \
+             -newkey $key_type \
+             -days $duration \
+             -keyout $DATA_PATH/ca_client.key \
+             -out $DATA_PATH/ca_client.cert
 
-$OPENSSL3 req -batch -x509 -noenc \
-          -newkey $key_type \
-          -days $duration \
-          -CA $DATA_PATH/ca_tunel.cert \
-          -CAkey $DATA_PATH/ca_tunel.key \
-          -keyout $DATA_PATH/tunnel.key \
-          -out $DATA_PATH/tunnel.cert
+$OPENSSL req -batch -x509 -noenc \
+             -newkey $key_type \
+             -days $duration \
+             -CA $DATA_PATH/ca_tunel.cert \
+             -CAkey $DATA_PATH/ca_tunel.key \
+             -keyout $DATA_PATH/tunnel.key \
+             -out $DATA_PATH/tunnel.cert
 
-$OPENSSL3 req -batch -x509 -noenc \
-          -newkey $key_type \
-          -days $duration \
-          -CA $DATA_PATH/ca_client.cert \
-          -CAkey $DATA_PATH/ca_client.key \
-          -keyout $DATA_PATH/client.key \
-          -out $DATA_PATH/client.cert
+$OPENSSL req -batch -x509 -noenc \
+             -newkey $key_type \
+             -days $duration \
+             -CA $DATA_PATH/ca_client.cert \
+             -CAkey $DATA_PATH/ca_client.key \
+             -keyout $DATA_PATH/client.key \
+             -out $DATA_PATH/client.cert

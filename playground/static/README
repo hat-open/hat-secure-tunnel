@@ -1,5 +1,0 @@
-ubuntu dependencies:
-- curl
-- build-essential
-- automake
-- libtool

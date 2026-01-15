@@ -9,7 +9,7 @@ cd $RUN_PATH
 
 
 cert_sn() {
-    $OPENSSL3 x509 -noout -serial -in $1 | sed 's/^serial=//'
+    $OPENSSL x509 -noout -serial -in $1 | sed 's/^serial=//'
 }
 
 cat >$DATA_PATH/conf.json <<EOF
