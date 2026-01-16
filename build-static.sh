@@ -53,7 +53,7 @@ build_musl () (
 
     cd $STATIC_PATH/src/$name
 
-    ./configure --prefix=$STATIC_PATH
+    ./configure --prefix=$STATIC_PATH --syslibdir=$STATIC_PATH/lib
     make
     make install
 )
@@ -102,7 +102,7 @@ build_kernel_headers () (
 
     cd $STATIC_PATH/src/$name
 
-    make ARCH=x86_64 prefix=$STATIC_PATH install
+    make ARCH=$(uname -m) prefix=$STATIC_PATH install
 )
 
 
