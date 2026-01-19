@@ -2,51 +2,173 @@
 
 set -e
 
-cd $(dirname "$(realpath "$0")")
 
-CC="${CC:-cc}"
-CFLAGS="${CFLAGS--g}"
-LDFLAGS="${LDFLAGS-}"
-LDLIBS=
-PREFIX="${PREFIX-/usr/local}"
-DESTDIR="${DESTDIR-}"
+usage () {
+    cat <<EOF
+Usage: $0 [OPTION]... [VAR=VALUE]...
 
-src_dir=src
-build_dir=build
+To assign environment variables (e.g., CC, CFLAGS...), specify them as
+VAR=VALUE.  See below for descriptions of some of the useful variables.
 
-if command -v pkg-config >/dev/null; then
-    libs="libuv openssl jansson"
+Defaults for the options are specified in brackets.
 
-    for lib in $libs; do
-        CFLAGS="${CFLAGS:+$CFLAGS }$(pkg-config --cflags $lib)"
-        LDFLAGS="${LDFLAGS:+$LDFLAGS }$(pkg-config --libs-only-L --libs-only-other $lib)"
-        LDLIBS="${LDLIBS:+$LDLIBS }$(pkg-config --libs-only-l $lib)"
-    done
+Configuration:
+  -h, --help              display this help and exit
+      --srcdir=DIR        find the sources in DIR [configure dir]
 
-else
-    LDFLAGS="${LDFLAGS:+$LDFLAGS }-luv -lssl -lcrypto -ljansson"
+Installation directories:
+  --prefix=PREFIX         install architecture-independent files in PREFIX
+                          [/usr/local]
+  --exec-prefix=EPREFIX   install architecture-dependent files in EPREFIX
+                          [PREFIX]
+
+Fine tuning of the installation directories:
+  --bindir=DIR            user executables [EPREFIX/bin]
+  --datarootdir=DIR       read-only arch.-independent data root [PREFIX/share]
+  --mandir=DIR            man documentation [DATAROOTDIR/man]
+
+System types:
+  --build=BUILD     configure for building on BUILD [guessed]
+  --host=HOST       cross-compile to build programs to run on HOST [BUILD]
+
+Optional Packages:
+  --with-PACKAGE[=ARG]    use PACKAGE [ARG=yes]
+  --without-PACKAGE       do not use PACKAGE (same as --with-PACKAGE=no)
+  --with-pkg-config       use pkg-config
+  --without-pkg-config    do not use pkg-config
+
+Some influential environment variables:
+  CC          C compiler command
+  CFLAGS      C compiler flags
+  LDFLAGS     linker flags, e.g. -L<lib dir> if you have libraries in a
+              nonstandard directory <lib dir>
+  LIBS        libraries to pass to the linker, e.g. -l<library>
+
+Use these variables to override the choices made by 'configure' or to help
+it to find libraries and programs with nonstandard names/locations.
+EOF
+    exit 0
+}
+
+
+add_cflags () {
+    CFLAGS_AUTO="${CFLAGS_AUTO:+$CFLAGS_AUTO }$*"
+}
+
+
+add_ldflags () {
+    LDFLAGS_AUTO="${LDFLAGS_AUTO:+$LDFLAGS_AUTO }$*"
+}
+
+
+add_libs () {
+    LIBS_AUTO="${LIBS_AUTO:+$LIBS_AUTO }$*"
+}
+
+
+srcdir=
+prefix=/usr/local
+exec_prefix='$(prefix)'
+bindir='$(exec_prefix)/bin'
+datarootdir='$(prefix)/share'
+mandir='$(datarootdir)/man'
+build=
+host=
+pkg_config=
+
+CFLAGS_AUTO=
+LDFLAGS_AUTO=
+LIBS_AUTO=
+
+
+for arg ; do
+    case "$arg" in
+        --help|-h) usage ;;
+        --srcdir=*) srcdir=${arg#*=} ;;
+        --prefix=*) prefix=${arg#*=} ;;
+        --exec-prefix=*) exec_prefix=${arg#*=} ;;
+        --bindir=*) bindir=${arg#*=} ;;
+        --datarootdir=*) datarootdir=${arg#*=} ;;
+        --mandir=*) mandir=${arg#*=} ;;
+        --build=*) build=${arg#*=} ;;
+        --host=*) host=${arg#*=} ;;
+        --with-pkg-config|--with-pkg-config=yes) pkg_config=yes ;;
+        --without-pkg-config|--with-pkg-config=no) pkg_config=no ;;
+        -* ) echo "$0: unknown option $arg" ;;
+        CC=*) CC=${arg#*=} ;;
+        CFLAGS=*) CFLAGS=${arg#*=} ;;
+        LDFLAGS=*) LDFLAGS=${arg#*=} ;;
+        LIBS=*) LIBS=${arg#*=} ;;
+        *=*) ;;
+    esac
+done
+
+
+if [ -z "$srcdir" ]; then
+    srcdir="${0%/configure}"
 fi
 
-sources="$(find $src_dir -name '*.c' | \
-           sed "s/^$src_dir/\\\$(SRC_DIR)/" | \
+if [ "$(cd $srcdir; pwd)" = "$(pwd)" ]; then
+    srcdir=.
+fi
+
+if [ -z "$pkg_config" ] && command -v pkg-config >/dev/null; then
+    pkg_config=yes
+fi
+
+CC="${CC:-cc}"
+
+add_cflags -g -O2
+
+if [ "$pkg_config" = yes ]; then
+    for lib in libuv openssl jansson; do
+        add_cflags $(pkg-config --cflags $lib)
+        add_ldflags $(pkg-config --libs-only-L --libs-only-other $lib)
+        add_libs $(pkg-config --libs-only-l $lib)
+    done
+else
+    add_libs -luv -lssl -lcrypto -ljansson
+fi
+
+sources="$(cd $srcdir/src; \
+           find . -name '*.c' | \
+           sed "s/^\./\\\$(SRC_DIR)/" | \
            tr -s '\n' ' ')"
-headers="$(find $src_dir -name '*.h' | \
-           sed "s/^$src_dir/\\\$(SRC_DIR)/" | \
+headers="$(cd $srcdir/src; \
+           find . -name '*.h' | \
+           sed "s/^\./\\\$(SRC_DIR)/" | \
            tr -s '\n' ' ')"
-objects="$(find $src_dir -name '*.c' | \
-           sed -e "s/^$src_dir/\\\$(OBJ_DIR)/" -e "s/\\.c$/\\.o/" | \
+objects="$(cd $srcdir/src
+           find . -name '*.c' | \
+           sed -e "s/^\./\\\$(OBJ_DIR)/" -e "s/\\.c$/\\.o/" | \
            tr -s '\n' ' ')"
 
 cat >config.mk <<EOF
-CC = $CC
-CFLAGS = $CFLAGS
-LDFLAGS = $LDFLAGS
-LDLIBS = $LDLIBS
-PREFIX = $PREFIX
-DESTDIR = $DESTDIR
+srcdir = $srcdir
+prefix = $prefix
+exec_prefix = $exec_prefix
+bindir = $bindir
+datarootdir = $datarootdir
+mandir = $mandir
+build = $build
+host = $host
 
-SRC_DIR = $src_dir
-BUILD_DIR = $build_dir
+CC = $CC
+
+CFLAGS = $CFLAGS
+CFLAGS_AUTO = $CFLAGS_AUTO
+CFLAGS_ALL = \$(CFLAGS_AUTO) \$(CFLAGS)
+
+LDFLAGS = $LDFLAGS
+LDFLAGS_AUTO = $LDFLAGS_AUTO
+LDFLAGS_ALL = \$(LDFLAGS_AUTO) \$(LDFLAGS)
+
+LIBS = $LIBS
+LIBS_AUTO = $LIBS_AUTO
+LIBS_ALL = \$(LIBS_AUTO) \$(LIBS)
+
+SRC_DIR = \$(srcdir)/src
+BUILD_DIR = build
 OBJ_DIR = \$(BUILD_DIR)/obj
 BIN = \$(BUILD_DIR)/hat-iec62351-tunnel
 
@@ -58,7 +180,7 @@ EOF
 {
 printf "\$(BIN): \$(OBJECTS)\n"
 printf "\t@mkdir -p \$(BUILD_DIR)\n"
-printf "\t\$(CC) \$(LDFLAGS) -o \$(BIN) \$(OBJECTS) \$(LDLIBS)\n"
+printf "\t\$(CC) \$(LDFLAGS_ALL) -o \$(BIN) \$(OBJECTS) \$(LIBS_ALL)\n"
 
 for src in $sources; do
     obj="${src%.c}.o"
@@ -66,6 +188,10 @@ for src in $sources; do
 
     printf "\n$obj: $src $headers\n"
     printf "\t@mkdir -p \$(OBJ_DIR)\n"
-    printf "\t\$(CC) \$(CFLAGS) -c -o \$@ $src\n"
+    printf "\t\$(CC) \$(CFLAGS_ALL) -c -o \$@ $src\n"
 done
 } >rules.mk
+
+if [ "$srcdir" != "." ]; then
+    ln -sf $srcdir/Makefile .
+fi

@@ -14,6 +14,8 @@ STATIC_PATH=$ROOT_PATH/static
 CACHE_PATH=$ROOT_PATH/cache
 PLAYGROUND_PATH=$ROOT_PATH/playground
 
+arch=$(uname -m)
+
 
 download () (
     file=$1
@@ -102,7 +104,7 @@ build_kernel_headers () (
 
     cd $STATIC_PATH/src/$name
 
-    make ARCH=$(uname -m) prefix=$STATIC_PATH install
+    make ARCH=$arch prefix=$STATIC_PATH install
 )
 
 
@@ -130,6 +132,34 @@ build_openssl () (
 )
 
 
+build_hat_iec62351_tunnel () (
+    name=hat-iec62351-tunnel
+
+    mkdir -p $STATIC_PATH/src/$name
+    cd $STATIC_PATH/src/$name
+
+    $ROOT_PATH/configure --prefix=$STATIC_PATH \
+                         --without-pkg-config \
+                         CFLAGS="-static"
+    make
+    make install
+)
+
+
+build_create_crl () (
+    $CC -static -g -O2 \
+        -o $STATIC_PATH/bin/create-crl \
+        $PLAYGROUND_PATH/create-crl/main.c \
+        -lssl -lcrypto
+)
+
+
+mkdir -p $STATIC_PATH
+
+if [ "$arch" = "x86_64" ]; then
+    ln -sf $STATIC_PATH/lib $STATIC_PATH/lib64
+fi
+
 if [ ! -f $STATIC_PATH/bin/musl-gcc ]; then
     build_musl musl-1.2.5
 fi
@@ -148,17 +178,10 @@ if [ ! -d $STATIC_PATH/include/linux ]; then
     build_kernel_headers kernel-headers-4.19.88-2
 fi
 
-if [ ! -f $STATIC_PATH/lib64/libssl.a ]; then
+if [ ! -f $STATIC_PATH/lib/libssl.a ]; then
     build_openssl openssl-3.6.0
 fi
 
+build_hat_iec62351_tunnel
 
-$CC -I$STATIC_PATH/include -L$STATIC_PATH/lib -L$STATIC_PATH/lib64 \
-    -static -O2 \
-    -o $STATIC_PATH/bin/hat-iec62351-tunnel $ROOT_PATH/src/*.c \
-    -luv -lssl -lcrypto -ljansson
-
-$CC -I$STATIC_PATH/include -L$STATIC_PATH/lib -L$STATIC_PATH/lib64 \
-    -static -O2 \
-    -o $STATIC_PATH/bin/create-crl $PLAYGROUND_PATH/create-crl/main.c \
-    -lssl -lcrypto
+build_create_crl

@@ -29,14 +29,6 @@ Build and install
     $ make
     $ make install
 
-During ``configure``, following environment variables are checked:
-
-* CC
-* CFLAGS
-* LDFLAGS
-* PREFIX
-* DESTDIR
-
 
 Running
 -------

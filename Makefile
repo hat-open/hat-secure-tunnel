@@ -11,10 +11,10 @@ FORMAT_STYLE = {BasedOnStyle: llvm,\
 all: $(BIN)
 
 install: $(BIN)
-	mkdir -p $(DESTDIR)$(PREFIX)/bin
-	mkdir -p $(DESTDIR)$(PREFIX)/share/man/man1
-	cp $(BIN) $(DESTDIR)$(PREFIX)/bin
-	gzip <man/hat-iec62351-tunnel.1 >$(DESTDIR)$(PREFIX)/share/man/man1/hat-iec62351-tunnel.1.gz
+	mkdir -p $(DESTDIR)$(bindir)
+	mkdir -p $(DESTDIR)$(mandir)/man1
+	cp $(BIN) $(DESTDIR)$(bindir)
+	gzip <$(srcdir)/man/hat-iec62351-tunnel.1 >$(DESTDIR)$(mandir)/man1/hat-iec62351-tunnel.1.gz
 
 format:
 	clang-format -i -style="$(FORMAT_STYLE)" $(SOURCES) $(HEADERS)
