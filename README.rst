@@ -9,6 +9,13 @@ hat-iec62351-tunnel - IEC 62351-3 tunnel
 Application providing tunnel between unencrypted and TLS communication
 based on IEC 62351-3.
 
+`hat-iec62351-tunnel` listens for incoming connections. Once incoming TCP
+connection is established, `hat-iec62351-tunnel` creates new outgoing connection
+to other TCP server. These two connections are paired and all data received
+on one connection is sent to other. Closing of one connection results in closing
+of other connection. Both incoming and outgoing connections can be configured to
+use TLS as defined by IEC 62351-3.
+
 * `git repository`_
 
 
@@ -33,7 +40,24 @@ Build and install
 Running
 -------
 
-...
+`hat-iec62351-tunnel` accepts path to JSON configuration as command line
+argument::
+
+    Usage: hat-iec62351-tunnel [-h] [-l LOG_LEVEL] <conf_path>
+
+      Arguments:
+        <conf_path>   Path to configuration file or - for stdin
+
+      Options:
+        -h            Display usage help and exit
+        -l LOG_LEVEL  Set logging level (DEBUG, INFO, WARNING, ERROR)
+                      (default INFO)
+
+Configuration structure is defined by JSON Schema
+``hat-iec62351-tunnel://main.yaml`` available as part of `hat-iec62351-tunnel`
+manual page::
+
+    $ man hat-iec62351-tunnel
 
 
 Hat Open

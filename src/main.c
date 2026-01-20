@@ -15,7 +15,7 @@ static void print_usage(FILE *f, char *name) {
             "Usage: %s [-h] [-l LOG_LEVEL] <conf_path>\n"
             "\n"
             "  Arguments:\n"
-            "    <conf_path>   Path to configuration file\n"
+            "    <conf_path>   Path to configuration file or - for stdin\n"
             "\n"
             "  Options:\n"
             "    -h            Display usage help and exit\n"

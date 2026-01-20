@@ -454,7 +454,13 @@ app_conf_t *create_app_conf(char *path) {
     app->json = NULL;
     app->mappings = NULL;
 
-    app->json = json_load_file(path, 0, NULL);
+    if (strcmp(path, "-") == 0) {
+        app->json = json_loadf(stdin, 0, NULL);
+
+    } else {
+        app->json = json_load_file(path, 0, NULL);
+    }
+
     if (!app->json) {
         log_error("json_load_file error");
         goto error;
