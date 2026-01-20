@@ -4,3 +4,4 @@
 /config.mk
 /rules.mk
 /static
+/tests/*/data
