@@ -1,5 +1,6 @@
 #include "common.h"
 
+#include <signal.h>
 #include <unistd.h>
 
 
@@ -60,6 +61,8 @@ static int parse_args(int argc, char *argv[], args_t *args) {
 
 
 int main(int argc, char *argv[]) {
+    signal(SIGPIPE, SIG_IGN);
+
     app_conf_t *app_conf = NULL;
     app_t *app = NULL;
 
