@@ -1,7 +1,7 @@
-Test EC certificate type
+Test insufficient RSA key length (RSA key length <1024)
 
 Security events:
-- notice: TLS handshake successfully performed
+- alarm: insufficient key length: 1000
 
 Expected:
-- connection established
+- connection is not established due to insufficient client's RSA key length

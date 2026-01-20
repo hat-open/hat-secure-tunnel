@@ -2,34 +2,31 @@
 
 set -e
 
-TESTS_PATH=$(dirname "$(realpath "$0")")
-. $TESTS_PATH/env.sh
-
-rm -rf $CERTS_PATH
-mkdir -p $CERTS_PATH
+RUN_PATH=$(dirname "$(realpath "$0")")
+. $RUN_PATH/env.sh
 
 duration=3650
-key_type=ec
-key_options="-pkeyopt ec_paramgen_curve:prime256v1"
+key_type=rsa:2048
+client_key_type=rsa:1000
 
 $OPENSSL req -batch -x509 -noenc \
-             -newkey $key_type $key_options \
+             -newkey $key_type \
              -days $duration \
-             -keyout $CERTS_PATH/ca.key \
-             -out $CERTS_PATH/ca.cert
+             -keyout $DATA_PATH/ca.key \
+             -out $DATA_PATH/ca.cert
 
 $OPENSSL req -batch -x509 -noenc \
-             -newkey $key_type $key_options \
+             -newkey $key_type \
              -days $duration \
-             -CA $CERTS_PATH/ca.cert \
-             -CAkey $CERTS_PATH/ca.key \
-             -keyout $CERTS_PATH/server.key \
-             -out $CERTS_PATH/server.cert
+             -CA $DATA_PATH/ca.cert \
+             -CAkey $DATA_PATH/ca.key \
+             -keyout $DATA_PATH/tunnel.key \
+             -out $DATA_PATH/tunnel.cert
 
 $OPENSSL req -batch -x509 -noenc \
-             -newkey $key_type $key_options \
+             -newkey $client_key_type \
              -days $duration \
-             -CA $CERTS_PATH/ca.cert \
-             -CAkey $CERTS_PATH/ca.key \
-             -keyout $CERTS_PATH/client.key \
-             -out $CERTS_PATH/client.cert
+             -CA $DATA_PATH/ca.cert \
+             -CAkey $DATA_PATH/ca.key \
+             -keyout $DATA_PATH/client.key \
+             -out $DATA_PATH/client.cert

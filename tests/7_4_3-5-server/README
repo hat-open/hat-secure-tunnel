@@ -1,0 +1,7 @@
+Test support of SHA-1 is deprecated
+
+Security events:
+- alarm: deprecated hash algorithm used
+
+Expected:
+- connection is not established due to deprecated hash algorithm used
