@@ -157,7 +157,9 @@ build_create_crl () (
 mkdir -p $STATIC_PATH
 
 if [ "$arch" = "x86_64" ]; then
-    ln -sf $STATIC_PATH/lib $STATIC_PATH/lib64
+    if [ ! -L $STATIC_PATH/lib64 ]; then
+        ln -sf $STATIC_PATH/lib $STATIC_PATH/lib64
+    fi
 fi
 
 if [ ! -f $STATIC_PATH/bin/musl-gcc ]; then
