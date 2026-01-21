@@ -118,6 +118,7 @@ static int on_verify(int preverify_ok, X509_STORE_CTX *x509_ctx) {
         log_event(SECURITY_EVENT_TLS_CERT_REVOKED, NULL);
         return 0;
 
+    case X509_V_ERR_CA_MD_TOO_WEAK:
     case X509_V_ERR_UNSUPPORTED_SIGNATURE_ALGORITHM:
         log_event(SECURITY_EVENT_TLS_SIG_ALG_MISMATCH, NULL);
         return 0;

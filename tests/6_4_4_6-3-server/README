@@ -1,0 +1,7 @@
+Test signature algorithm not supported
+
+Security events:
+- alarm: certificate validation: certificate signature could not be verified
+
+Expected:
+- close connection

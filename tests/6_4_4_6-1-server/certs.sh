@@ -25,6 +25,7 @@ $OPENSSL req -batch -x509 -noenc \
 $OPENSSL req -batch -x509 -noenc \
              -newkey $key_type \
              -days $duration \
+             -md5 \
              -CA $DATA_PATH/ca.cert \
              -CAkey $DATA_PATH/ca.key \
              -keyout $DATA_PATH/client.key \
