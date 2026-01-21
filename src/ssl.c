@@ -8,6 +8,7 @@
 static void destroy_timer(uv_timer_t *timer);
 static void renegotiate(ssl_t *ssl);
 static int verify_cert(ssl_t *ssl, X509 *cert);
+static int verify_crl(ssl_t *ssl);
 static X509_CRL *load_crl(char *path);
 static uint64_t get_next_crl_update_interval(ssl_t *ssl);
 
@@ -47,10 +48,7 @@ static void on_crl_update_timer(uv_timer_t *timer) {
     if (!crl)
         log_event(SECURITY_EVENT_TLS_NO_CRL, NULL);
 
-    if (ssl->crl && crl && X509_CRL_match(ssl->crl, crl) == 0) {
-        X509_CRL_free(crl);
-        return;
-    }
+    bool crl_match = ssl->crl && crl && X509_CRL_match(ssl->crl, crl) == 0;
 
     if (ssl->crl)
         X509_CRL_free(ssl->crl);
@@ -66,6 +64,14 @@ static void on_crl_update_timer(uv_timer_t *timer) {
         0) {
         log_error("uv_timer_start error");
         close_channel(ssl->endpoint->channel);
+        return;
+    }
+
+    if (crl_match) {
+        if (!verify_crl(ssl)) {
+            log_error("verify_crl error");
+            close_channel(ssl->endpoint->channel);
+        }
         return;
     }
 
@@ -142,6 +148,10 @@ static int on_verify(int preverify_ok, X509_STORE_CTX *x509_ctx) {
 
 static int on_client_hello(SSL *s, int *al, void *arg) {
     log_debug("on_client_hello");
+
+    if (SSL_client_hello_get0_ext(s, TLSEXT_TYPE_signature_algorithms, NULL,
+                                  NULL) != 1)
+        log_event(SECURITY_EVENT_TLS_NO_SIG_ALGO_EXT, NULL);
 
     return SSL_CLIENT_HELLO_SUCCESS;
 }
@@ -328,11 +338,9 @@ static void process_handshake_error(ssl_t *ssl) {
             } else if (client_version == TLS1_1_VERSION) {
                 log_event(SECURITY_EVENT_TLS_DEPRECATED_VERSION, "TLSv1.1");
 
-            } else if (client_version == SSL3_VERSION) {
-                log_event(SECURITY_EVENT_TLS_DISALLOWED_VERSION, "SSLv3");
-
             } else {
-                log_event(SECURITY_EVENT_TLS_DISALLOWED_VERSION, NULL);
+                log_event(SECURITY_EVENT_TLS_DISALLOWED_VERSION, "%s",
+                          SSL_get_version(ssl->ssl));
             }
 
         } else if (error_reason == SSL_R_PEER_DID_NOT_RETURN_A_CERTIFICATE) {
