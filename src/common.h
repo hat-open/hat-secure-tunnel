@@ -29,6 +29,14 @@
     "TLS_AES_128_CCM_SHA256:"                                                  \
     "TLS_AES_128_CCM_8_SHA256"
 
+#define SIGNATURE_LIST                                                         \
+    "RSA+SHA256:"                                                              \
+    "RSA+SHA384:"                                                              \
+    "RSA+SHA512:"                                                              \
+    "ECDSA+SHA256:"                                                            \
+    "ECDSA+SHA384:"                                                            \
+    "ECDSA+SHA512"
+
 #define SESSION_ID "HAT-IEC62351"
 
 #define log_debug(...) log_log(LOG_LEVEL_DEBUG, __VA_ARGS__)

@@ -655,6 +655,11 @@ ssl_ctx_t *create_ssl_ctx(endpoint_type_t type, ssl_conf_t *conf) {
             goto error;
         }
 
+        if (SSL_CTX_set1_sigalgs_list(ctx->ctx, SIGNATURE_LIST) != 1) {
+            log_error("SSL_CTX_set1_sigalgs_list error");
+            goto error;
+        }
+
         // X509_VERIFY_PARAM *verify_param = SSL_CTX_get0_param(ctx->ctx);
         // unsigned long verify_flags =
         // X509_VERIFY_PARAM_get_flags(verify_param); if
