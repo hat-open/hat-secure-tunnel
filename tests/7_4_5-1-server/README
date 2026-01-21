@@ -1,0 +1,9 @@
+Test server initiated renegotiation
+
+Security events:
+- notice: TLS handshake successfully performed
+
+Expected:
+- Server (tunnel) every 5 seconds initiates renegotiation (set in tunnel's
+  configuration by `renegotiate_interval`), that is handshake is performed
+  every 5s.

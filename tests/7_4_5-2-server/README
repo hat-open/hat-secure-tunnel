@@ -1,0 +1,11 @@
+Test client initiated renegotiation
+
+In order to trigger client initiated renegotiation, after starting the
+client by `client.sh` and successful initial handshake, enter "R".
+
+Security events:
+- notice: TLS handshake successfully performed
+
+Expected:
+- After "R" is entered on client's command line input, successful handshake
+  is performed.
