@@ -67,6 +67,7 @@ typedef struct mapping_t mapping_t;
 typedef struct channel_t channel_t;
 typedef struct endpoint_t endpoint_t;
 typedef struct ssl_ctx_t ssl_ctx_t;
+typedef struct ssl_extensions_t ssl_extensions_t;
 typedef struct ssl_t ssl_t;
 
 typedef struct buffer_pool_t buffer_pool_t;
@@ -199,6 +200,12 @@ struct ssl_ctx_t {
     SSL_CTX *ctx;
 };
 
+struct ssl_extensions_t {
+    bool renegotiation_info;
+    bool signature_algorithms;
+    bool encrypt_then_mac;
+};
+
 struct ssl_t {
     endpoint_t *endpoint;
     ssl_close_cb_t close_cb;
@@ -211,6 +218,7 @@ struct ssl_t {
     X509_CRL *crl;
     buffer_t *output_plain_data;
     int version;
+    ssl_extensions_t remote_extensions;
 };
 
 struct buffer_pool_t {

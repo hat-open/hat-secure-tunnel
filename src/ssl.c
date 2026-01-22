@@ -5,6 +5,10 @@
 #include <openssl/err.h>
 
 
+#define MSG_TYPE_CLIENT_HELLO 1
+#define MSG_TYPE_SERVER_HELLO 2
+
+
 static void destroy_timer(uv_timer_t *timer);
 static void renegotiate(ssl_t *ssl);
 static int verify_cert(ssl_t *ssl, X509 *cert);
@@ -147,17 +151,6 @@ static int on_verify(int preverify_ok, X509_STORE_CTX *x509_ctx) {
 }
 
 
-static int on_client_hello(SSL *s, int *al, void *arg) {
-    log_debug("on_client_hello");
-
-    if (SSL_client_hello_get0_ext(s, TLSEXT_TYPE_signature_algorithms, NULL,
-                                  NULL) != 1)
-        log_event(SECURITY_EVENT_TLS_NO_SIG_ALGO_EXT, NULL);
-
-    return SSL_CLIENT_HELLO_SUCCESS;
-}
-
-
 static int on_client_session(SSL *s, SSL_SESSION *session) {
     log_debug("on_client_session");
 
@@ -169,6 +162,82 @@ static int on_client_session(SSL *s, SSL_SESSION *session) {
     ssl->endpoint->channel->mapping->client_session = session;
 
     return 1;
+}
+
+
+static void on_message(int write_p, int version, int content_type,
+                       const void *buf, size_t len, SSL *a, void *arg) {
+    ssl_t *ssl = arg;
+
+    if (content_type != SSL3_RT_HANDSHAKE)
+        return;
+
+    const uint8_t *data = buf;
+    size_t pos = 0;
+
+    if (pos >= len)
+        return;
+    uint8_t msg_type = data[pos];
+    pos += 1;
+
+    if (!(ssl->endpoint->type == ENDPOINT_TYPE_CLIENT &&
+          msg_type == MSG_TYPE_SERVER_HELLO) &&
+        !(ssl->endpoint->type == ENDPOINT_TYPE_SERVER &&
+          msg_type == MSG_TYPE_CLIENT_HELLO))
+        return;
+
+    ssl->remote_extensions = (ssl_extensions_t){.renegotiation_info = false,
+                                                .signature_algorithms = false,
+                                                .encrypt_then_mac = false};
+
+    pos += 3;      // skip length
+    pos += 2;      // skip client/server version
+    pos += 4 + 28; // skip random
+
+    if (pos >= len)
+        return;
+    pos += 1 + data[pos]; // skip sessions id
+
+    if (msg_type == MSG_TYPE_CLIENT_HELLO) {
+        if (pos + 1 >= len)
+            return;
+        pos += 2 + (((uint16_t)data[pos] << 8) |
+                    data[pos + 1]); // skip sipher suites
+
+        if (pos >= len)
+            return;
+        pos += 1 + data[pos]; // skip compression methods
+
+    } else {
+        pos += 2; // skip cipher suite
+        pos += 1; // skip compression method
+    }
+
+    pos += 2; // skip extension length
+
+    while (true) {
+        if (pos + 1 >= len)
+            return;
+        uint16_t ext_type = ((uint16_t)data[pos] << 8) | data[pos + 1];
+        pos += 2;
+
+        switch (ext_type) {
+        case TLSEXT_TYPE_renegotiate:
+            ssl->remote_extensions.renegotiation_info = true;
+            break;
+        case TLSEXT_TYPE_signature_algorithms:
+            ssl->remote_extensions.signature_algorithms = true;
+            break;
+        case TLSEXT_TYPE_encrypt_then_mac:
+            ssl->remote_extensions.encrypt_then_mac = true;
+            break;
+        }
+
+        if (pos + 1 >= len)
+            return;
+        pos += 2 + (((uint16_t)data[pos] << 8) |
+                    data[pos + 1]); // skip extension data
+    }
 }
 
 
@@ -632,8 +701,6 @@ ssl_ctx_t *create_ssl_ctx(endpoint_type_t type, ssl_conf_t *conf) {
             goto error;
         }
 
-        SSL_CTX_set_client_hello_cb(ctx->ctx, on_client_hello, NULL);
-
     } else {
         SSL_CTX_sess_set_new_cb(ctx->ctx, on_client_session);
     }
@@ -740,6 +807,9 @@ ssl_t *create_ssl(endpoint_t *endpoint, ssl_close_cb_t close_cb) {
     ssl->crl = NULL;
     ssl->output_plain_data = NULL;
     ssl->version = 0;
+    ssl->remote_extensions = (ssl_extensions_t){.renegotiation_info = false,
+                                                .signature_algorithms = false,
+                                                .encrypt_then_mac = false};
 
     ssl->renegotiate_timer = create_timer(ssl);
     if (!ssl->renegotiate_timer) {
@@ -801,6 +871,9 @@ ssl_t *create_ssl(endpoint_t *endpoint, ssl_close_cb_t close_cb) {
         if (!ssl->crl)
             log_event(SECURITY_EVENT_TLS_NO_CRL, NULL);
     }
+
+    SSL_set_msg_callback(ssl->ssl, on_message);
+    SSL_set_msg_callback_arg(ssl->ssl, ssl);
 
     ssl->close_cb = close_cb;
 
