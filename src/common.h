@@ -29,7 +29,7 @@
     "TLS_AES_128_CCM_SHA256:"                                                  \
     "TLS_AES_128_CCM_8_SHA256"
 
-#define SIGNATURE_LIST                                                         \
+#define SIG_ALG_LIST                                                           \
     "RSA+SHA256:"                                                              \
     "ECDSA+SHA256:"                                                            \
     "rsa_pss_rsae_sha256:"                                                     \

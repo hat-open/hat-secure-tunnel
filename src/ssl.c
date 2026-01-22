@@ -323,7 +323,7 @@ static void write_ssl(ssl_t *ssl) {
 
 static void process_handshake_error(ssl_t *ssl) {
     unsigned long error = ERR_get_error();
-    log_error("do handshake error: %s", ERR_error_string(error, NULL));
+    log_error("SSL_do_handshake error: %s", ERR_error_string(error, NULL));
 
     int error_lib = ERR_GET_LIB(error);
     int error_reason = ERR_GET_REASON(error);
@@ -655,7 +655,7 @@ ssl_ctx_t *create_ssl_ctx(endpoint_type_t type, ssl_conf_t *conf) {
             goto error;
         }
 
-        if (SSL_CTX_set1_sigalgs_list(ctx->ctx, SIGNATURE_LIST) != 1) {
+        if (SSL_CTX_set1_sigalgs_list(ctx->ctx, SIG_ALG_LIST) != 1) {
             log_error("SSL_CTX_set1_sigalgs_list error");
             goto error;
         }

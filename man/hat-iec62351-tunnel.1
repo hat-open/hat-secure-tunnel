@@ -100,7 +100,10 @@ property defines maximum allowed peer certificate length.
 property enables certificate revocation list checks. Path to CRL is read
 during connection establishment and optionally updated if
 .Em update_interval
-is specified.
+is specified. If
+.Em update_interval
+is not provided, CRL is read only during connection establishment regardless
+of CRL's nextUpdate value.
 
 .Em renegotiate_interval
 property specifies optional TLS renegotiation interval. If renegotiation is
