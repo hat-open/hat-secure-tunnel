@@ -31,11 +31,18 @@
 
 #define SIGNATURE_LIST                                                         \
     "RSA+SHA256:"                                                              \
-    "RSA+SHA384:"                                                              \
-    "RSA+SHA512:"                                                              \
     "ECDSA+SHA256:"                                                            \
-    "ECDSA+SHA384:"                                                            \
-    "ECDSA+SHA512"
+    "rsa_pss_rsae_sha256:"                                                     \
+    "rsa_pss_rsae_sha384:"                                                     \
+    "rsa_pss_rsae_sha512:"                                                     \
+    "rsa_pss_pss_sha256:"                                                      \
+    "rsa_pss_pss_sha384:"                                                      \
+    "rsa_pss_pss_sha512:"                                                      \
+    "ecdsa_secp256r1_sha256:"                                                  \
+    "ecdsa_secp384r1_sha384:"                                                  \
+    "ecdsa_brainpoolP256r1_sha256:"                                            \
+    "ecdsa_brainpoolP384r1_sha384:"                                            \
+    "ecdsa_brainpoolP512r1_sha512"
 
 #define SESSION_ID "HAT-IEC62351"
 

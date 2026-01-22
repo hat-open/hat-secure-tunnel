@@ -1,0 +1,9 @@
+Test mandatory cipher suite for TLSv1.3 TLS_AES_256_GCM_SHA384 is
+supported
+
+Security events:
+- notice: TLS handshake successfully performed
+
+Expected:
+- connection is established using the cipher suite TLS_AES_256_GCM_SHA384, as
+  required by the client

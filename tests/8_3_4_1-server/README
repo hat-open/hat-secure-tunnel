@@ -1,0 +1,8 @@
+Test mandatory signature algorithm for TLSv1.3 rsa_pss_rsae_sha256 is supported
+
+Security events:
+- notice: TLS handshake successfully performed
+
+Expected:
+- connection is established using the signature algorithm rsa_pss_rsae_sha256,
+  as required by the client
