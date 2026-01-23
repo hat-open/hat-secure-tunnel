@@ -555,7 +555,8 @@ static int verify_crl(ssl_t *ssl) {
 
     const ASN1_TIME *next_update = X509_CRL_get0_nextUpdate(ssl->crl);
     if (next_update) {
-        if (ASN1_TIME_cmp_time_t(next_update, time(NULL)) == -1)
+        int cmp = ASN1_TIME_cmp_time_t(next_update, time(NULL));
+        if (cmp == -1 || cmp == 0)
             log_event(SECURITY_EVENT_TLS_CRL_EXP, NULL);
     }
 
