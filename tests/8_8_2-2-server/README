@@ -1,0 +1,13 @@
+Check if HelloRetryRequest contains the "supported_versions" extension with
+0x0304 identifier
+
+Notes:
+- openssl s_client does not display HelloRetryRequest, but instead displays
+  ServerHello with key_share extension set to the requested group (currently
+  0x001d standing for X25519)
+
+Security events:
+- none
+
+Expected:
+- HelloRetryRequest contains "supported_versions" with the 0x0304 identifier

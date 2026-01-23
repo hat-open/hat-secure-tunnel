@@ -1,0 +1,8 @@
+Check if ServerHello contains the "supported_versions" extension with 0x0304
+identifier
+
+Security events:
+- none
+
+Expected:
+- server hello contains "supported_versions" with the 0x0304 identifier
