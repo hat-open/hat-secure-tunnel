@@ -1,4 +1,6 @@
-Test refresh CRL based on nextUpdate field and configured interval
+Test refresh CRL when nextUpdate is not set
+
+CRL nextUpdate is not set, configured update_interval is set to 10s.
 
 Expected:
 - connection remains open

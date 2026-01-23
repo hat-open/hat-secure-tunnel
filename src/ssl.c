@@ -626,7 +626,7 @@ static uint64_t get_next_crl_update_interval(ssl_t *ssl) {
     if (pday < 0 || psec < 0 || (pday == 0 && psec == 0))
         goto fallback;
 
-    uint64_t interval = (uint64_t)pday * 3600 + psec;
+    uint64_t interval = (uint64_t)pday * 86400 + psec;
     if (interval > ssl->conf->remote_cert->crl->update_interval)
         goto fallback;
 
