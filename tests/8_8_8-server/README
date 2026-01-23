@@ -1,0 +1,16 @@
+Check if the tunnel understands the "certificate_authorities" extension and
+raises a security event if it does not have a certificate signed by the CA
+requested in the "certificate_authorities" extension
+
+Notes:
+- this currently fails since the position of the RFC8446 and therefore OpenSSL
+  is that this extension is taken as a hint and not as a requirement, meaning
+  that the server will send any certificate if it does not have a certificate
+  signed by the requested CA
+
+Security events:
+- alarm: matching CA certificate supported on TLSv1.3 peer not found
+
+Expected:
+- if a client sends a CA in the "certificate_authorities" extension and the
+  server does not have a certificate signed by that CA, the security event
