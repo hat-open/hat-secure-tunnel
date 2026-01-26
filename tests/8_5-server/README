@@ -1,0 +1,8 @@
+Test message NewSessionTicket is sent from server to client after handshake
+
+Security events:
+- notice: TLS handshake successfully performed
+
+Expected:
+- after successfull handshake, clients outputs on the standard output:
+  "Post-Handshake New Session Ticket arrived: ..."

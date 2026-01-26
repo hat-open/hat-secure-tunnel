@@ -1,0 +1,2 @@
+Server does not respond with the KeyUpdate message, although client sends
+KeyUpdate message with `update_requested (1)` flag.

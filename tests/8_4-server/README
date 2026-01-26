@@ -1,0 +1,17 @@
+Test session key update request from client to server
+
+Pre-test Settings:
+- in order to decode communication in Wireshark set:
+  Edit -> Preferences -> Protocols -> TLS -> (Pre)-Master-Secret log filename
+  to /tmp/sslkeys.log
+
+Security events:
+- notice: TLS handshake successfully performed
+
+Expected:
+- After successful handshake, KeyUpdate message (visible in Wireshark, if
+  decoded) with `update_requested (1)` flag is sent from client by entering `K`
+  in the console.
+
+  Server should respond with KeyUpdate message in order to force client to
+  update its key material (check using Wireshark).
