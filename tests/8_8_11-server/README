@@ -1,0 +1,10 @@
+Check if the server does not support early data
+
+Notes:
+- this test currently fails since the server does not raise the security event
+
+Security events:
+- warning: Early data in handshake detected but ignored
+
+Expected:
+- the server must ignore the data and raise the security event
