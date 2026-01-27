@@ -1,17 +1,25 @@
 Test session key update request from client to server
 
-Pre-test Settings:
-- in order to decode communication in Wireshark set:
-  Edit -> Preferences -> Protocols -> TLS -> (Pre)-Master-Secret log filename
-  to /tmp/sslkeys.log
+Procedure:
+- after starting the client, wait for TLS handshake to be successfully
+  performed. Then, in client's command line type "K" in order to send a key
+  update message to the server and request one back .
 
 Security events:
 - notice: TLS handshake successfully performed
 
 Expected:
-- After successful handshake, KeyUpdate message (visible in Wireshark, if
-  decoded) with `update_requested (1)` flag is sent from client by entering `K`
-  in the console.
+- On `KeyUpdate` message (with update_requested (1) flag), server should respond
+  with `KeyUpdate` message in order to force client to update its key material
+  (check using Wireshark).
 
-  Server should respond with KeyUpdate message in order to force client to
-  update its key material (check using Wireshark).
+Assertion:
+- record the communication using Wireshark.
+  In order to decode messages in Wireshark that follow after handshake, one
+  should set keys log file:
+  Edit -> Preferences -> Protocols -> TLS -> `(Pre)-Master-Secret log filename`
+  to $DATA/sslkeys.log
+
+- In the recorded communication messages you should see:
+  - `KeyUpdate` message from client to server
+  - `KeyUpdate` message from server to client

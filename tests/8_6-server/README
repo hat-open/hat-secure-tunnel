@@ -1,0 +1,45 @@
+Test Session resumption
+
+Procedure:
+- after starting the client, wait for TLS handshake to be successfully
+  performed. Then, in client's command line type "C" in order to reconnect to
+  the server using a resumption handshake.
+
+Security events:
+- notice: TLS handshake successfully performed
+- notice: TLS handshake successfully performed
+
+Expected:
+- Client reconnects to the server using a resumption handshake, that is, client
+  succefully reconnects using session-ticket from NewSessionTicket message
+  received in the previous connection, without certificate verification.
+
+Assertion:
+- record the communication using Wireshark.
+  In order to decode messages in Wireshark that follow after handshake, one
+  should set keys log file:
+  Edit -> Preferences -> Protocols -> TLS -> `(Pre)-Master-Secret log filename`
+  to $DATA/sslkeys.log
+
+- In the recorded communication messages you should see:
+  - After initial handshake and resumption request, client closes connection.
+  - After closing the connection client sends `ClientHello` message with 
+    `pre_shared_key` extension, where PSK identity is set to session ticket
+    from the last `NewSessionTicket` message.
+  - server sends `ServerHello`, without `Certificate Request` and finishes
+    handshake
+  - Client sends `Change Cipher Spec, Finished` and handshake finishes
+  - There is no certificate verification in the handshake (there is no
+    `Certificate, Certificate Verify, Finished` message)
+  - 1-RTT is used: application data is sent only after the handshake
+  - psk_dhe_ke is used: extension `psk_key_exchange_modes` is set to
+    psk_dhe_ke (1)
+
+Notes:
+According to the protocol IEC62351-3:
+- session resumption cannot be performed in the context of an active session as
+  a ClientHello message after the TLS handshake will lead to a session
+  termination.
+- session resumption with TLSv1.3 is only intended for establishing another
+  secured connection, which is bound to the initial TLS session between the
+  same peers.
