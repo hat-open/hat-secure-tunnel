@@ -1,4 +1,4 @@
-Test mandatory cipher suite for TLSv1.2 TLS_RSA_WITH_AES_128_GCM_SHA256 is
+Test mandatory cipher suite for TLSv1.2 TLS_RSA_WITH_AES_128_CBC_SHA256 is
 supported.
 
 Security events:

@@ -1,0 +1,13 @@
+Test mandatory cipher suite for TLSv1.2 TLS_DHE_RSA_WITH_AES_128_GCM_SHA256 is
+supported.
+
+Security events:
+- notice: TLS handshake successfully performed
+
+Expected:
+- connection is established using the only cipher suite
+  TLS_DHE_RSA_WITH_AES_128_GCM_SHA256 supported by the server
+
+Assertion:
+- in server's standard output, one should see:
+  "CIPHER is DHE-RSA-AES128-GCM-SHA256"

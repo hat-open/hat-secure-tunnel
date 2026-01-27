@@ -1,0 +1,18 @@
+Test connection is not established for the disallowed cipher suite
+TLS_DHE_RSA_WITH_AES_256_CBC_SHA256.
+
+This cipher suite is not listed as supported for TLSv1.2. This implementation
+considers this cipher suite as disallowed, although it is not mentioned in the
+standard (7.3) as explicitly disallowed. Reason is: the standard says the list
+of disallowed cipher suites is not limited.
+
+Expected:
+- connection is not established using the only cipher suite
+  TLS_DHE_RSA_WITH_AES_256_CBC_SHA256 supported by the server
+
+Assertion:
+- tunnel error:
+  SSL_do_handshake error: error:0A000410:SSL routines::ssl/tls alert handshake
+  failure
+- server error:
+  tls_post_process_client_hello:no shared cipher

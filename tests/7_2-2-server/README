@@ -1,5 +1,5 @@
 Test connection is not established for the cipher suite
-TLS_RSA_WITH_AES_128_GCM_SHA256.
+TLS_DHE_RSA_WITH_AES_256_CBC_SHA256.
 
 This cipher suite is not listed as supported for TLSv1.2. This implementation
 considers this cipher suite as disallowed, although it is not mentioned in the
