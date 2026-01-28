@@ -167,6 +167,13 @@ static int on_client_session(SSL *s, SSL_SESSION *session) {
 }
 
 
+// static int on_allow_early_data(SSL *s, void *arg) {
+//     log_debug("on_allow_early_data");
+
+//     return 0;
+// }
+
+
 static void on_message(int write_p, int version, int content_type,
                        const void *buf, size_t len, SSL *a, void *arg) {
     ssl_t *ssl = arg;
@@ -905,6 +912,8 @@ ssl_t *create_ssl(endpoint_t *endpoint, ssl_close_cb_t close_cb) {
         if (!ssl->crl)
             log_event(SECURITY_EVENT_TLS_NO_CRL, NULL);
     }
+
+    // SSL_set_allow_early_data_cb(ssl->ssl, on_allow_early_data, ssl);
 
     SSL_set_msg_callback(ssl->ssl, on_message);
     SSL_set_msg_callback_arg(ssl->ssl, ssl);

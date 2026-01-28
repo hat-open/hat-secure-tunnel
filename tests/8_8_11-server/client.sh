@@ -21,4 +21,5 @@ exec $OPENSSL s_client -debug -msg -tls1_3 \
                        -CAfile $DATA_PATH/ca.cert \
                        -sess_in $DATA_PATH/sess.pem \
                        -early_data $DATA_PATH/early_data.txt \
+                       -keylogfile $DATA_PATH/sslkeys.log \
                        -trace
