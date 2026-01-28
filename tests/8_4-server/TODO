@@ -1,4 +1,0 @@
-Tunnel's server on client's KeyUpdate message with `update_requested(1)` flag:
-
-- renews his sending key material
-- sends `KeyUpdate` message to client with `update_not_requested (0)` flag

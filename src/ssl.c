@@ -7,6 +7,7 @@
 
 #define MSG_TYPE_CLIENT_HELLO 1
 #define MSG_TYPE_SERVER_HELLO 2
+#define MSG_TYPE_KEY_UPDATE 24
 
 
 static void destroy_timer(uv_timer_t *timer);
@@ -169,6 +170,9 @@ static void on_message(int write_p, int version, int content_type,
                        const void *buf, size_t len, SSL *a, void *arg) {
     ssl_t *ssl = arg;
 
+    if (write_p)
+        return;
+
     if (content_type != SSL3_RT_HANDSHAKE)
         return;
 
@@ -179,6 +183,11 @@ static void on_message(int write_p, int version, int content_type,
         return;
     uint8_t msg_type = data[pos];
     pos += 1;
+
+    if (msg_type == MSG_TYPE_KEY_UPDATE) {
+        ssl->force_write = true;
+        return;
+    }
 
     if (!(ssl->endpoint->type == ENDPOINT_TYPE_CLIENT &&
           msg_type == MSG_TYPE_SERVER_HELLO) &&
@@ -355,29 +364,43 @@ static void read_ssl(ssl_t *ssl) {
 
 
 static void write_ssl(ssl_t *ssl) {
-    while (ssl->output_plain_data) {
-        buffer_t *buffer = ssl->output_plain_data;
-        ssl->output_plain_data = buffer->next;
+    while (ssl->output_plain_data || ssl->force_write) {
+        ssl->force_write = false;
 
-        int ret =
-            SSL_write(ssl->ssl, buffer->data + buffer->offset, buffer->len);
+        size_t written;
+        int ret;
 
-        if (ret > 0) {
-            if (ret == buffer->len) {
-                push_buffer(buffer);
+        if (ssl->output_plain_data) {
+            buffer_t *buffer = ssl->output_plain_data;
+            ssl->output_plain_data = buffer->next;
 
-            } else {
-                buffer->offset += ret;
-                buffer->len -= ret;
-                buffer->next = ssl->output_plain_data;
-                ssl->output_plain_data = buffer;
+
+            ret = SSL_write_ex(ssl->ssl, buffer->data + buffer->offset,
+                               buffer->len, &written);
+
+            if (ret > 0) {
+                if (written == buffer->len) {
+                    push_buffer(buffer);
+
+                } else {
+                    buffer->offset += written;
+                    buffer->len -= written;
+                    buffer->next = ssl->output_plain_data;
+                    ssl->output_plain_data = buffer;
+                }
+
+                continue;
             }
 
-            continue;
-        }
+            buffer->next = ssl->output_plain_data;
+            ssl->output_plain_data = buffer;
 
-        buffer->next = ssl->output_plain_data;
-        ssl->output_plain_data = buffer;
+        } else {
+            ret = SSL_write_ex(ssl->ssl, NULL, 0, &written);
+
+            if (ret > 0)
+                continue;
+        }
 
         int error = SSL_get_error(ssl->ssl, ret);
         if (error != SSL_ERROR_WANT_READ && error != SSL_ERROR_WANT_WRITE) {
@@ -807,6 +830,7 @@ ssl_t *create_ssl(endpoint_t *endpoint, ssl_close_cb_t close_cb) {
     ssl->ssl = NULL;
     ssl->crl = NULL;
     ssl->output_plain_data = NULL;
+    ssl->force_write = false;
     ssl->version = 0;
     ssl->remote_extensions = (ssl_extensions_t){.renegotiation_info = false,
                                                 .signature_algorithms = false,
