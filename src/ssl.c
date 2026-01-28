@@ -16,6 +16,7 @@ static int verify_cert(ssl_t *ssl, X509 *cert);
 static int verify_crl(ssl_t *ssl);
 static X509_CRL *load_crl(char *path);
 static uint64_t get_next_crl_update_interval(ssl_t *ssl);
+static void parse_hello_message(ssl_t *ssl, const uint8_t *data, size_t len);
 
 
 static void on_timer_close(uv_handle_t *timer) {
@@ -169,35 +170,43 @@ static int on_client_session(SSL *s, SSL_SESSION *session) {
 static void on_message(int write_p, int version, int content_type,
                        const void *buf, size_t len, SSL *a, void *arg) {
     ssl_t *ssl = arg;
+    const uint8_t *data = buf;
 
     if (write_p)
         return;
 
-    if (content_type != SSL3_RT_HANDSHAKE)
-        return;
+    if (content_type == SSL3_RT_HANDSHAKE && len > 0) {
+        switch (data[0]) {
+        case MSG_TYPE_CLIENT_HELLO:
+            if (ssl->endpoint->type == ENDPOINT_TYPE_SERVER)
+                parse_hello_message(ssl, data, len);
 
-    const uint8_t *data = buf;
-    size_t pos = 0;
+            break;
 
-    if (pos >= len)
-        return;
-    uint8_t msg_type = data[pos];
-    pos += 1;
+        case MSG_TYPE_SERVER_HELLO:
+            if (ssl->endpoint->type == ENDPOINT_TYPE_CLIENT)
+                parse_hello_message(ssl, data, len);
 
-    if (msg_type == MSG_TYPE_KEY_UPDATE) {
-        ssl->force_write = true;
-        return;
+            break;
+
+        case MSG_TYPE_KEY_UPDATE:
+            ssl->force_write = true;
+            break;
+        }
     }
+}
 
-    if (!(ssl->endpoint->type == ENDPOINT_TYPE_CLIENT &&
-          msg_type == MSG_TYPE_SERVER_HELLO) &&
-        !(ssl->endpoint->type == ENDPOINT_TYPE_SERVER &&
-          msg_type == MSG_TYPE_CLIENT_HELLO))
-        return;
+
+static void parse_hello_message(ssl_t *ssl, const uint8_t *data, size_t len) {
+    size_t pos = 0;
 
     ssl->remote_extensions = (ssl_extensions_t){.renegotiation_info = false,
                                                 .signature_algorithms = false,
                                                 .encrypt_then_mac = false};
+    if (pos >= len)
+        return;
+    uint8_t msg_type = data[pos];
+    pos += 1;
 
     pos += 3;      // skip length
     pos += 2;      // skip client/server version
