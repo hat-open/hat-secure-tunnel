@@ -1,0 +1,19 @@
+Test tunnel's client terminates the connection if on renegotiation initiation
+(by ClientHello), it does not receive a TLS renegotiation response
+(HelloRequest) by the server.
+
+Security events (for initial connection and each renegotiation):
+- notice: TLS handshake successfully performed
+
+Errors:
+- SSL_do_handshake error: error:0A000153:SSL routines::no renegotiation
+
+Expected:
+- 5 seconds after successful handshake, tunnel's client initiates renegotiation
+  (set in tunnel's configuration by `renegotiate_interval`) by `ClientHello`
+  message. Server refuses by Alert (Level: Warning, Description: No
+  Renegotiation). Client closes the connection.
+
+Notes:
+- renegotiation is explicitly disabled on openssl s_server by
+  `-no_renegotiation` flag

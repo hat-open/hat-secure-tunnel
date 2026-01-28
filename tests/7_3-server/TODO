@@ -1,1 +1,3 @@
-build static openssl with support for RC4-MD5
+openssl s_client does not have support for RC4-MD5
+
+- build static openssl with support for RC4-MD5

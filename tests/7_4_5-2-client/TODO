@@ -1,0 +1,5 @@
+On renegotiation openssl s_server does not required client's certificate.
+This should be enabled using "R" (instead of "r"), as stated in documentation:
+
+> R - Renegotiate the SSL session and request a client certificate (TLSv1.2 and
+  below only).

@@ -1,0 +1,28 @@
+Test tunnel's client responds on server initiated renegotiation
+(support the processing of the `HelloRequest`)
+
+Procedure:
+- In order to trigger server initiated renegotiation (with client certificate
+  request), after starting the server and successful initial handshake,
+  enter "R" in server's command line.
+
+Security events (for each renegotiation):
+- notice: TLS handshake successfully performed
+
+Expected:
+- After "R" is entered on server's command line input, successful handshake
+  is performed.
+
+Assertion:
+- record the communication using Wireshark.
+  In order to decode messages in Wireshark that follow after handshake, one
+  should set keys log file:
+  Edit -> Preferences -> Protocols -> TLS -> `(Pre)-Master-Secret log filename`
+  to $DATA/sslkeys.log
+
+- In the recorded communication messages you should see:
+  - when renegotiation is requested from server, it sends `HelloRequest` message
+  - tunnel's client responds with `ClientHello`
+  - server responds with `ServerHello`, certificate and certificate request
+  - after handshake is finished, server sends `NewSessionTicket`
+  - connection is not closed during renegotiation

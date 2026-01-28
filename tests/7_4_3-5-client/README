@@ -1,0 +1,8 @@
+Test SHA-1 signature algorithms is not supported
+
+Security events:
+- alarm: certificate validation: signature algorithms not supported
+
+Expected:
+- connection is not established due to deprecated hash algorithm used for
+  server certificate

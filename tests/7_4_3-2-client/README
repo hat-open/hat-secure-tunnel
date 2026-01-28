@@ -1,0 +1,7 @@
+Test insufficient RSA key length (RSA key length <1024)
+
+Security events:
+- alarm: insufficient key length: 1000
+
+Expected:
+- connection is not established due to insufficient server's RSA key length

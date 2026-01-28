@@ -1,6 +1,6 @@
-Test server terminates the connection if on renegotiation initiation
-(by HelloRequest), it does not receive a TLS renegotiation (ClientHello) in
-response.
+Test tunnel's server terminates the connection if on renegotiation initiation
+(by HelloRequest), it does not receive a TLS renegotiation response
+(ClientHello) by the client.
 
 Security events:
 - notice: TLS handshake successfully performed
@@ -9,6 +9,10 @@ errors:
 - SSL_read error
 
 Expected:
-- 5 seconds after initial successful handshake, server initiates renegotiation
+- 5 seconds after successful handshake, tunnel's server initiates renegotiation
   (set in tunnel's configuration by `renegotiate_interval`). Client refuses and
   server closes connection.
+
+Notes:
+- renegotiation is explicitly disabled on openssl s_client by
+  `-no_renegotiation` flag

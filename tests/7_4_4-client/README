@@ -1,0 +1,8 @@
+Test session resumption based on session ticket
+
+Security events:
+- notice: TLS handshake successfully performed
+
+Expected:
+- Client successfully reconnects to the server using session ticket from
+  the inital handshake.

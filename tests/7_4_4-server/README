@@ -4,5 +4,13 @@ Security events:
 - notice: TLS handshake successfully performed (6 times)
 
 Expected:
-- Client succesfully reconnects to the server 5 times using the same session
+- Client successfully reconnects to the server 5 times using the same session
   ticket.
+
+Assertion:
+- after first successful handshake, server sends `NewSessionTicket` message
+- after closing the connection, client sends `ClientHello` message
+  with `session_ticket` extension, where `Session ticket` equals to the
+  ticket from server's `NewSessionTicket` message (first client's `ClientHello`
+  message has `session_ticket` extension, but `Session ticket` is missing.
+- connection is established without full handshake and certificate validation.

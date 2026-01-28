@@ -1,0 +1,7 @@
+Test insufficient EC key length
+
+Error:
+- insufficient EC key length: 224
+
+Expected:
+- connection is not established due to insufficient servers's EC key length

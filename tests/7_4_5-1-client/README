@@ -1,0 +1,28 @@
+Test client initiated renegotiation
+
+Security events (for initial connection and each renegotiation):
+- notice: TLS handshake successfully performed
+
+Expected:
+- Tunnel's client every 5 seconds initiates renegotiation (set in tunnel's
+  configuration by `renegotiate_interval`), that is handshake is performed
+  every 5s, without closing the connection.
+
+Assertion:
+- record the communication using Wireshark.
+  In order to decode messages in Wireshark that follow after handshake, one
+  should set keys log file:
+  Edit -> Preferences -> Protocols -> TLS -> `(Pre)-Master-Secret log filename`
+  to $DATA/sslkeys.log
+
+- In the recorded communication messages you should see:
+  - every 5 seconds client sends `ClientHello` message
+  - server responds with Server Hello, certificate and certificate request
+  - after handshake is finished, server sends `NewSessionTicket`
+  - connection is not closed during renegotiation
+
+Notes:
+- in order to enable renegotiation on the server (openssl s_server),
+  `-client_renegotiation` argument is added (although s_server should
+  enable renegotiation by default and writes explicitly
+  "Secure Renegotiation IS supported" to stdout).

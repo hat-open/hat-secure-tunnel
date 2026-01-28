@@ -1,9 +1,10 @@
-Test client initiated renegotiation
+Test tunnel's server responds on client initiated renegotiation
 
-In order to trigger client initiated renegotiation, after starting the
-client by `client.sh` and successful initial handshake, enter "R".
+Procedure:
+- In order to trigger client initiated renegotiation, after starting the client
+  and successful initial handshake, enter "R" in client's command line.
 
-Security events:
+Security events (for each renegotiation):
 - notice: TLS handshake successfully performed
 
 Expected:
