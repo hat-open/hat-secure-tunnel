@@ -9,9 +9,9 @@ Security events:
 - notice: TLS handshake successfully performed
 
 Expected:
-- On `KeyUpdate` message (with update_requested (1) flag), server should respond
-  with `KeyUpdate` message in order to force client to update its key material
-  (check using Wireshark).
+- On `KeyUpdate` message (with update_requested (1) flag) from client, tunnel's
+  server should respond with `KeyUpdate` message in order to force client to
+  update its key material.
 
 Assertion:
 - record the communication using Wireshark.

@@ -1,0 +1,14 @@
+Test mandatory signature algorithm for TLSv1.3 rsa_pss_rsae_sha256 is supported.
+
+Security events:
+- notice: TLS handshake successfully performed
+
+Expected:
+- connection is established using the signature algorithm rsa_pss_rsae_sha256,
+  as required by the server
+
+Assertion:
+- in server's standard output, one should see:
+  "Peer signature type: rsa_pss_rsae_sha512"
+- in wireshark one should see extension `signature_algorithms` in `Certificate
+  Request` message with `Signature Algorithm: rsa_pss_rsae_sha512 (0x0806)`
