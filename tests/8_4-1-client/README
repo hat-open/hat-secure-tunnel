@@ -1,12 +1,12 @@
-Test session key update request from server to client
+Test client's configuration of session key update interval
 
 Security events:
 - notice: TLS handshake successfully performed
 
 Expected:
-- On `KeyUpdate` message (with update_requested (1) flag) from server, tunnel's
-  client should respond with `KeyUpdate` message in order to force server to
-  update its key material.
+- each 1s, defined in configuration with `renegotiate_interval`, client
+  sends KeyUpdate` message, with update_requested (1) flag. Server responds
+   with `KeyUpdate` messaeg, with update_not_requested (0) flag.
 
 Assertion:
 - record the communication using Wireshark.
@@ -16,5 +16,5 @@ Assertion:
   to $DATA/sslkeys.log
 
 - In the recorded communication messages you should see:
-  - `KeyUpdate` message from server to client
   - `KeyUpdate` message from client to server
+  - `KeyUpdate` message from server to client

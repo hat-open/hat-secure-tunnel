@@ -1,0 +1,30 @@
+Test session key update request initiated by client
+
+Procedure:
+- after starting the client, wait for TLS handshake to be successfully
+  performed. Then, in client's command line type "K" in order to send a
+  `KeyUpdate` message and request the server to send back the `KeyUpdate`
+  message (with update_requested (1) flag).
+
+- In case "k", is used, `KeyUpdate` will be sent with update_not_requested (0).
+
+Security events:
+- notice: TLS handshake successfully performed
+
+Expected:
+- On `KeyUpdate` message, with update_requested (1) flag, from client, tunnel's
+  server responds with `KeyUpdate` message with update_not_requested (0) flag.
+
+- On `KeyUpdate` message, with update_not_requested (0) flag, from client,
+  tunnel's server does not respond.
+
+Assertion:
+- record the communication using Wireshark.
+  In order to decode messages in Wireshark that follow after handshake, one
+  should set keys log file:
+  Edit -> Preferences -> Protocols -> TLS -> `(Pre)-Master-Secret log filename`
+  to $DATA/sslkeys.log
+
+- In the recorded communication messages you should see two subsequent messages:
+  - `KeyUpdate` message from client to server with update_requested (1)
+  - `KeyUpdate` message from server to client with update_not_requested (0)

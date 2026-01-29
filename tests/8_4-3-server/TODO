@@ -1,0 +1,2 @@
+disable mock client (openssl s_client) to respond on KeyUpdate with
+update_requested (1)

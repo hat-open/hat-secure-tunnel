@@ -1,0 +1,9 @@
+Test termination of a connection due to a missed TLS session key update
+
+Security events:
+- alarm: session key update interval expired
+
+Expected:
+- if server does not respond with `KeyUpdate` message, after tunnel's client
+  sends `KeyUpdate` message with update_requested (1) flag, client terminates
+  the connection and raises security event.

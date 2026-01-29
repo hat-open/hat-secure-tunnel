@@ -10,4 +10,5 @@ exec $OPENSSL s_server -debug -msg -tls1_2 \
                        -cert $DATA_PATH/server.cert \
                        -key $DATA_PATH/server.key \
                        -verifyCAfile $DATA_PATH/tunnel.cert \
-                       -Verify 1
+                       -Verify 1 \
+                       -keylogfile $DATA_PATH/sslkeys.log

@@ -21,8 +21,7 @@ cat >$DATA_PATH/conf.json <<EOF
                     },
                     "remote_cert": {
                         "ca_path": "$DATA_PATH/ca.cert"
-                    },
-                    "session_cache_timeout": 2000
+                    }
                 }
             },
             "client": {

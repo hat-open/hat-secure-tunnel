@@ -1,0 +1,20 @@
+Test server's configuration of session key update interval
+
+Security events:
+- notice: TLS handshake successfully performed
+
+Expected:
+- each 1s, defined in configuration with `renegotiate_interval`, server
+  sends KeyUpdate` message, with update_requested (1) flag. Client responds
+   with `KeyUpdate` messaeg, with update_not_requested (0) flag.
+
+Assertion:
+- record the communication using Wireshark.
+  In order to decode messages in Wireshark that follow after handshake, one
+  should set keys log file:
+  Edit -> Preferences -> Protocols -> TLS -> `(Pre)-Master-Secret log filename`
+  to $DATA/sslkeys.log
+
+- In the recorded communication messages you should see two subsequent messages:
+  - `KeyUpdate` message from server to client with update_requested (1)
+  - `KeyUpdate` message from client to server with update_not_requested (0)
