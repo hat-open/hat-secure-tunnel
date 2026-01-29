@@ -9,5 +9,6 @@ exec $OPENSSL s_server -debug -msg -tls1_2 \
                        -port $SERVER_PORT \
                        -cert $DATA_PATH/server.cert \
                        -key $DATA_PATH/server.key \
+                       -cipher 'DEFAULT:@SECLEVEL=0' \
                        -verifyCAfile $DATA_PATH/tunnel.cert \
                        -Verify 1

@@ -1,1 +1,6 @@
-Tunnel should raise Error: insufficient EC key length: 224
+mock server (openssl s_server) stops the handshake because group (curve) used
+for its key/certificate generation `secp224r1` does not match tunnel's client's
+groups (ClientHello extension `supported_groups`).
+
+Generate key < 256 with some of the client's groups or force the server
+to continue the handsake.
