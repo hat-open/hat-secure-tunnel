@@ -161,9 +161,9 @@ static int on_client_session(SSL *s, SSL_SESSION *session) {
     if (ssl->endpoint->channel->mapping->client_session)
         SSL_SESSION_free(ssl->endpoint->channel->mapping->client_session);
 
-    ssl->endpoint->channel->mapping->client_session = session;
+    ssl->endpoint->channel->mapping->client_session = SSL_SESSION_dup(session);
 
-    return 1;
+    return 0;
 }
 
 
@@ -897,9 +897,13 @@ ssl_t *create_ssl(endpoint_t *endpoint, ssl_close_cb_t close_cb) {
         log_warning("SSL_set_mode result different from argument");
 
     if (endpoint->type == ENDPOINT_TYPE_CLIENT) {
-        if (endpoint->channel->mapping->client_session)
-            SSL_set_session(ssl->ssl,
-                            endpoint->channel->mapping->client_session);
+        if (endpoint->channel->mapping->client_session) {
+            if (SSL_set_session(ssl->ssl,
+                                endpoint->channel->mapping->client_session) !=
+                1) {
+                log_warning("SSL_set_session error");
+            }
+        }
 
         SSL_set_connect_state(ssl->ssl);
 

@@ -1,3 +1,0 @@
-- implement client's periodic session resumption with configurable session
-  resumption interval
-- eventually session resumption on reconnection
