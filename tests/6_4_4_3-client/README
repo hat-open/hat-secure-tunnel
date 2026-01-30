@@ -1,0 +1,10 @@
+Test CA with serial number verification with wrong serial number
+
+Security events:
+- alarm: certificate validation: trusted individual certificate from authorized
+  CA not available
+
+Expected:
+- connection established with certificate included in allowed conf (server1)
+- connection not established with certificate not included in allowed conf
+  (server2)

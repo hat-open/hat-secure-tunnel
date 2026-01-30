@@ -1,0 +1,7 @@
+Test unsupported TLS version (TLS<1.0)
+
+Error SSL_do_handshake error: error:0A00042E:SSL routines::tlsv1 alert protocol
+version is raised.
+
+Expected:
+- connection is not established

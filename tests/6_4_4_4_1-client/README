@@ -1,0 +1,10 @@
+Test revoked certificates
+
+Server certificate included in CRL
+
+Security events:
+- alarm: certificate validation: revoked certificate
+- alarm: session terminated due to revoked certificate
+
+Expected:
+- connection not established

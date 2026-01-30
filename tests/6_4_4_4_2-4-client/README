@@ -1,0 +1,13 @@
+Test refresh CRL based on nextUpdate field and configured CRL update interval
+
+CRL nextUpdate is set to 20s, configured update_interval to 10s.
+After CRL expires we get security event "warning: CRL expired" that then
+appears periodically every update_interval seconds. Connection remains open.
+
+For testing purposes, the CRL with nextUpdate set must be freshly generated.
+
+Security events:
+- warning: CRL expired
+
+Expected:
+- connection established and remains open

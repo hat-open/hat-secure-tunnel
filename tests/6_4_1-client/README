@@ -1,0 +1,11 @@
+Test multiple CAs
+
+Security events:
+- notice: TLS handshake successfully performed
+- alarm: certificate validation: CA certificate not available
+
+Expected:
+- connections established with certificates signed by ca included in tunnel
+  configuration (server1)
+- connections not established with certificates signed by ca not included in
+  tunnel configuration (server2)

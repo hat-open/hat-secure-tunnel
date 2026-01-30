@@ -1,0 +1,7 @@
+Test local CRL not accessible
+
+Security events:
+- warning: local CRL not accessible
+
+Expected:
+- connection established

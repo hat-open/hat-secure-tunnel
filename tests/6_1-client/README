@@ -1,0 +1,7 @@
+Test successful handshake
+
+Security events:
+- notice: TLS handshake successfully performed
+
+Expected:
+- connection established

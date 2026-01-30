@@ -1,0 +1,7 @@
+est lack of peer certificate
+
+Security events:
+- alarm: peer certificate unavailable
+
+Expected:
+- connection closed

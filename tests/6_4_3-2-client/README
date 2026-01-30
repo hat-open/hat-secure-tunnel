@@ -1,0 +1,7 @@
+Test lack of local certificate
+
+Security events:
+- alarm: endpoint certificate unavailable
+
+Expected:
+- tunnel closed

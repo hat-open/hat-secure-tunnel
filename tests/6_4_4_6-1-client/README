@@ -1,0 +1,10 @@
+Test signature algorithm not supported
+
+Server certificate generated using -md5 flag which causes
+X509_V_ERR_CA_MD_TOO_WEAK error.
+
+Security events:
+- alarm: certificate validation: signature algorithms not supported
+
+Expected:
+- close not established
