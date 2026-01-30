@@ -1,1 +1,9 @@
-this test currently fails since the server does not raise the security event
+This cannot be tested, since s_client does not send early_data
+(although called with `-early_data` option), if server does not indicate it
+supports early_data by early_data extension in `NewSessionTicket` message of
+the first handshake. If server's context is set with
+SSL_CTX_set_max_early_data, it will support early data and client starts
+sending early_data. However, this is not desired feature for the server, since
+62351-3 don't allow 0-RTT.
+
+Make s_client to send early_data, although server does not support it.

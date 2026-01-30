@@ -12,6 +12,7 @@ echo "GET / HTTP/1.1" > $DATA_PATH/early_data.txt
                   -cert $DATA_PATH/client.cert \
                   -key $DATA_PATH/client.key \
                   -CAfile $DATA_PATH/ca.cert \
+                  -keylogfile $DATA_PATH/sslkeys.log \
                   -sess_out $DATA_PATH/sess.pem > /dev/null 2>&1
 
 exec $OPENSSL s_client -debug -msg -tls1_3 \

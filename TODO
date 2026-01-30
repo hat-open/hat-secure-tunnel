@@ -1,5 +1,4 @@
 * ssl shutdown
 * tests
-* crl checks using ssl ctx
 * revision of security events
 * documentation
