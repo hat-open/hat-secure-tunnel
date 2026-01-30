@@ -10,13 +10,24 @@ Security events:
 - notice: TLS handshake successfully performed
 
 Expected:
-- Client reconnects to the server using a resumption handshake, that is, client
-  succefully reconnects using session-ticket from NewSessionTicket message
-  received in the previous connection, without certificate verification.
+- 2s after initial handshake, client reconnects to the server using a resumption
+  handshake, that is, client succefully reconnects using session-ticket from
+  NewSessionTicket message received in the previous connection, without
+  certificate verification.
+
 
 Assertion:
-- record the communication using Wireshark.
-  In order to decode messages in Wireshark that follow after handshake, one
+- in tunnel's stdout, one can see (debug logging is enabled):
+    [DEBUG] session reuse 1
+- in client's stdout, one can see:
+    Resumption PSK: ...
+
+Notes:
+- reconnection is achieved using "C" command on the openssl s_client command
+  lime in order to reconnect to the server using a resumption handshake.
+
+Wireshark:
+- In order to decode messages in Wireshark that follow after handshake, one
   should set keys log file:
   Edit -> Preferences -> Protocols -> TLS -> `(Pre)-Master-Secret log filename`
   to $DATA/sslkeys.log

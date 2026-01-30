@@ -1,0 +1,23 @@
+Test client performs Session resumption
+
+Procedure:
+- After inital handshake, restart the client (on this way connection
+  from tunnel's client with server is re-established).
+  Alternative is to restart the server, but then client will stop and needs
+  to be started again.
+
+Security events:
+- notice: TLS handshake successfully performed
+- notice: TLS handshake successfully performed
+
+Expected:
+- after client is closed and started again, tunnel's client connects
+  successfully to the server, but with session resumption, that is, uses the
+  session-ticket established after the initial handshake using the
+  NewSessionTicket message
+
+Assertion:
+- in tunnel's stdout, one can see (debug logging is enabled):
+    [DEBUG] session reuse 1
+- in server's stdout, one can see message:
+    Reused session-id
