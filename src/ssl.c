@@ -169,13 +169,6 @@ static int on_client_session(SSL *s, SSL_SESSION *session) {
 }
 
 
-// static int on_allow_early_data(SSL *s, void *arg) {
-//     log_debug("on_allow_early_data");
-
-//     return 0;
-// }
-
-
 static void on_message(int write_p, int version, int content_type,
                        const void *buf, size_t len, SSL *a, void *arg) {
     ssl_t *ssl = arg;
@@ -753,6 +746,8 @@ ssl_ctx_t *create_ssl_ctx(endpoint_type_t type, ssl_conf_t *conf) {
             goto error;
         }
 
+        // SSL_CTX_set_max_early_data(ctx->ctx, 0xffff);
+
     } else {
         SSL_CTX_sess_set_new_cb(ctx->ctx, on_client_session);
     }
@@ -929,8 +924,6 @@ ssl_t *create_ssl(endpoint_t *endpoint, ssl_close_cb_t close_cb) {
             log_event(SECURITY_EVENT_TLS_NO_CRL, NULL);
     }
 
-    // SSL_set_allow_early_data_cb(ssl->ssl, on_allow_early_data, ssl);
-
     SSL_set_msg_callback(ssl->ssl, on_message);
     SSL_set_msg_callback_arg(ssl->ssl, ssl);
 
@@ -1011,6 +1004,9 @@ init:
                 close_channel(ssl->endpoint->channel);
                 return;
             }
+
+            if (SSL_get_early_data_status(ssl->ssl) != SSL_EARLY_DATA_NOT_SENT)
+                log_event(SECURITY_EVENT_TLS_EARLY_DATA, NULL);
 
             log_event(SECURITY_EVENT_TLS_HS_SUCCESS, NULL);
 
