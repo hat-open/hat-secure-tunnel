@@ -1,2 +1,1 @@
-Notes:
-- this test currently fails since the server does not raise the security event
+this test currently fails since the server does not raise the security event

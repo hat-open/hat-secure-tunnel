@@ -1,0 +1,4 @@
+this currently fails since the position of the RFC8446 and therefore OpenSSL
+is that this extension is taken as a hint and not as a requirement, meaning
+that the server will send any certificate if it does not have a certificate
+signed by the requested CA
