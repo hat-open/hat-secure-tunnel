@@ -389,7 +389,13 @@ static void read_ssl(ssl_t *ssl) {
 
         int error = SSL_get_error(ssl->ssl, ret);
         if (error != SSL_ERROR_WANT_READ) {
-            log_error("SSL_read error");
+            if (error == SSL_ERROR_ZERO_RETURN) {
+                log_debug("SSL_read zero return");
+
+            } else {
+                log_error("SSL_read error");
+            }
+
             close_channel(ssl->endpoint->channel);
         }
 
