@@ -17,6 +17,8 @@ static int verify_crl(ssl_t *ssl);
 static X509_CRL *load_crl(char *path);
 static uint64_t get_next_crl_update_interval(ssl_t *ssl);
 static void parse_hello_message(ssl_t *ssl, const uint8_t *data, size_t len);
+static void parse_key_update_message(ssl_t *ssl, const uint8_t *data,
+                                     size_t len);
 
 
 static void on_timer_close(uv_handle_t *timer) {
@@ -197,7 +199,7 @@ static void on_message(int write_p, int version, int content_type,
             break;
 
         case MSG_TYPE_KEY_UPDATE:
-            ssl->force_write = true;
+            parse_key_update_message(ssl, data, len);
             break;
         }
     }
@@ -263,6 +265,23 @@ static void parse_hello_message(ssl_t *ssl, const uint8_t *data, size_t len) {
         pos += 2 + (((uint16_t)data[pos] << 8) |
                     data[pos + 1]); // skip extension data
     }
+}
+
+
+static void parse_key_update_message(ssl_t *ssl, const uint8_t *data,
+                                     size_t len) {
+    size_t pos = 0;
+
+    pos += 1; // skip msg type
+    pos += 3; // skip length
+
+    if (pos >= len)
+        return;
+    uint8_t req = data[pos];
+    pos += 1;
+
+    if (req == SSL_KEY_UPDATE_REQUESTED)
+        ssl->key_update_requested = true;
 }
 
 
@@ -380,43 +399,30 @@ static void read_ssl(ssl_t *ssl) {
 
 
 static void write_ssl(ssl_t *ssl) {
-    while (ssl->output_plain_data || ssl->force_write) {
-        ssl->force_write = false;
+    while (ssl->output_plain_data) {
+        buffer_t *buffer = ssl->output_plain_data;
+        ssl->output_plain_data = buffer->next;
 
         size_t written;
-        int ret;
-
-        if (ssl->output_plain_data) {
-            buffer_t *buffer = ssl->output_plain_data;
-            ssl->output_plain_data = buffer->next;
-
-
-            ret = SSL_write_ex(ssl->ssl, buffer->data + buffer->offset,
+        int ret = SSL_write_ex(ssl->ssl, buffer->data + buffer->offset,
                                buffer->len, &written);
 
-            if (ret > 0) {
-                if (written == buffer->len) {
-                    push_buffer(buffer);
+        if (ret > 0) {
+            if (written == buffer->len) {
+                push_buffer(buffer);
 
-                } else {
-                    buffer->offset += written;
-                    buffer->len -= written;
-                    buffer->next = ssl->output_plain_data;
-                    ssl->output_plain_data = buffer;
-                }
-
-                continue;
+            } else {
+                buffer->offset += written;
+                buffer->len -= written;
+                buffer->next = ssl->output_plain_data;
+                ssl->output_plain_data = buffer;
             }
 
-            buffer->next = ssl->output_plain_data;
-            ssl->output_plain_data = buffer;
-
-        } else {
-            ret = SSL_write_ex(ssl->ssl, NULL, 0, &written);
-
-            if (ret > 0)
-                continue;
+            continue;
         }
+
+        buffer->next = ssl->output_plain_data;
+        ssl->output_plain_data = buffer;
 
         int error = SSL_get_error(ssl->ssl, ret);
         if (error != SSL_ERROR_WANT_READ && error != SSL_ERROR_WANT_WRITE) {
@@ -846,7 +852,7 @@ ssl_t *create_ssl(endpoint_t *endpoint, ssl_close_cb_t close_cb) {
     ssl->ssl = NULL;
     ssl->crl = NULL;
     ssl->output_plain_data = NULL;
-    ssl->force_write = false;
+    ssl->key_update_requested = false;
     ssl->version = 0;
     ssl->remote_extensions = (ssl_extensions_t){.renegotiation_info = false,
                                                 .signature_algorithms = false,
@@ -976,6 +982,7 @@ void destroy_ssl(ssl_t *ssl) {
 void process_ssl(ssl_t *ssl) {
     ERR_clear_error();
 
+init:
     if (!SSL_is_init_finished(ssl->ssl)) {
         int ret = SSL_do_handshake(ssl->ssl);
 
@@ -1001,7 +1008,8 @@ void process_ssl(ssl_t *ssl) {
 
             log_event(SECURITY_EVENT_TLS_HS_SUCCESS, NULL);
 
-            log_debug("session reuse %d", SSL_session_reused(ssl->ssl));
+            log_debug("handshake done (session reuse: %d)",
+                      SSL_session_reused(ssl->ssl));
 
             if (ssl->conf->renegotiate_interval) {
                 if (uv_timer_start(ssl->renegotiate_timer, on_renegotiate_timer,
@@ -1044,7 +1052,21 @@ void process_ssl(ssl_t *ssl) {
     }
 
     read_ssl(ssl);
+
+    if (ssl->key_update_requested) {
+        ssl->key_update_requested = false;
+
+        if (SSL_key_update(ssl->ssl, SSL_KEY_UPDATE_NOT_REQUESTED) != 1) {
+            log_error("SSL_key_update error");
+            close_channel(ssl->endpoint->channel);
+            return;
+        }
+
+        goto init;
+    }
+
     write_ssl(ssl);
+
     read_output_bio(ssl);
 }
 

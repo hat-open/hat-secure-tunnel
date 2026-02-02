@@ -217,7 +217,7 @@ struct ssl_t {
     SSL *ssl;
     X509_CRL *crl;
     buffer_t *output_plain_data;
-    bool force_write;
+    bool key_update_requested;
     int version;
     ssl_extensions_t remote_extensions;
 };
