@@ -202,9 +202,10 @@ static void on_message(int write_p, int version, int content_type,
 static void parse_hello_message(ssl_t *ssl, const uint8_t *data, size_t len) {
     size_t pos = 0;
 
-    ssl->remote_extensions = (ssl_extensions_t){.renegotiation_info = false,
-                                                .signature_algorithms = false,
-                                                .encrypt_then_mac = false};
+    ssl->extensions = (ssl_extensions_t){.renegotiation_info = false,
+                                         .signature_algorithms = false,
+                                         .encrypt_then_mac = false};
+
     if (pos >= len)
         return;
     uint8_t msg_type = data[pos];
@@ -243,13 +244,13 @@ static void parse_hello_message(ssl_t *ssl, const uint8_t *data, size_t len) {
 
         switch (ext_type) {
         case TLSEXT_TYPE_renegotiate:
-            ssl->remote_extensions.renegotiation_info = true;
+            ssl->extensions.renegotiation_info = true;
             break;
         case TLSEXT_TYPE_signature_algorithms:
-            ssl->remote_extensions.signature_algorithms = true;
+            ssl->extensions.signature_algorithms = true;
             break;
         case TLSEXT_TYPE_encrypt_then_mac:
-            ssl->remote_extensions.encrypt_then_mac = true;
+            ssl->extensions.encrypt_then_mac = true;
             break;
         }
 
@@ -587,6 +588,14 @@ static int verify_cipher(ssl_t *ssl) {
 }
 
 
+static int verify_extensions(ssl_t *ssl) {
+    if (!ssl->extensions.signature_algorithms)
+        log_event(SECURITY_EVENT_TLS_NO_SIG_ALGO_EXT, NULL);
+
+    return 1;
+}
+
+
 static int verify_crl(ssl_t *ssl) {
     if (!ssl->crl)
         return 1;
@@ -855,9 +864,9 @@ ssl_t *create_ssl(endpoint_t *endpoint, ssl_close_cb_t close_cb) {
     ssl->output_plain_data = NULL;
     ssl->key_update_requested = false;
     ssl->version = 0;
-    ssl->remote_extensions = (ssl_extensions_t){.renegotiation_info = false,
-                                                .signature_algorithms = false,
-                                                .encrypt_then_mac = false};
+    ssl->extensions = (ssl_extensions_t){.renegotiation_info = false,
+                                         .signature_algorithms = false,
+                                         .encrypt_then_mac = false};
 
     ssl->renegotiate_timer = create_timer(ssl);
     if (!ssl->renegotiate_timer) {
@@ -994,6 +1003,12 @@ init:
 
             if (!verify_cipher(ssl)) {
                 log_error("verify_cipher error");
+                close_channel(ssl->endpoint->channel);
+                return;
+            }
+
+            if (!verify_extensions(ssl)) {
+                log_error("verify_extensions error");
                 close_channel(ssl->endpoint->channel);
                 return;
             }

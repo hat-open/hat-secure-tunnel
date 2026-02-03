@@ -220,7 +220,7 @@ struct ssl_t {
     buffer_t *output_plain_data;
     bool key_update_requested;
     int version;
-    ssl_extensions_t remote_extensions;
+    ssl_extensions_t extensions;
 };
 
 struct buffer_pool_t {
