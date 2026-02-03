@@ -1,0 +1,14 @@
+Test ClientHello message contains `supported_groups` extension with at least the
+mandatory groups
+
+Security events:
+- notice: TLS handshake successfully performed
+
+Expected:
+- `ClientHello` message sent from tunnel's client to the server contains
+  extension `supported_groups` which includes the mandatory groups:
+  - secp256r1
+  - ffdhe2048
+
+Assertion:
+- In wireshark, one should find `ClientHello` with extension `supported_groups`

@@ -1,0 +1,18 @@
+Test ClientHello message contains `signature_algorithms` extension
+with at least the mandatory algorithms
+
+Security events:
+- notice: TLS handshake successfully performed
+
+Expected:
+- `ClientHello` message sent from tunnel's client to the server contains
+  extension `signature_algorithms` which includes the mandatory algorithms:
+  - rsa_pkcs1_sha256 (mandatory supported signature algorithm for the
+    certificates in TLSv1.3, Table 6)
+  - rsa_pss_rsae_sha256
+  - rsa_pss_pss_sha256
+  - ecdsa_secp256r1_sha256
+
+Assertion:
+- In wireshark, one should find `ClientHello` with
+  extension `signature_algorithms`

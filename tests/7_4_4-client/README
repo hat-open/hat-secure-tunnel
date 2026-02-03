@@ -1,8 +1,16 @@
 Test session resumption based on session ticket
 
+Procedure:
+- After successful handshake, re-run the client.
+
 Security events:
 - notice: TLS handshake successfully performed
 
 Expected:
 - Client successfully reconnects to the server using session ticket from
-  the inital handshake.
+  the initial handshake.
+
+Assertion:
+-  after second successful handshake, tunnel outputs:
+   [DEBUG] session reuse 1
+   (tunnel is run with `-l DEBUG`)

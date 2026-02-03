@@ -1,0 +1,31 @@
+Test client sends `pre_shared-key` and `psk_key_exchange_modes` extensions
+on resumption
+
+
+Procedure:
+- After initial handshake, restart the client (on this way connection
+  from tunnel's client with server is re-established).
+
+Security events:
+- notice: TLS handshake successfully performed
+- notice: TLS handshake successfully performed
+
+Expected:
+- after connection is closed, client sends second `ClientHello` message
+  in order to resumption the connection.
+
+  `ClientHello` message includes `psk_key_exchange_modes` extension with
+  offering only the `psk_dhe_ke` key exchange mode.
+
+  Also, it includes  `pre_shared_key` to negotiate the identity of the
+  pre-shared key.
+
+
+Assertion:
+- in Wireshark, one can find the second `ClientHello` message, in the
+  second handshake, after connection was closed.
+  That `ClientHello` message contains extension `psk_key_exchange_modes` with
+  PSK Key Exchange Mode: PSK with (EC)DHE key establishment (psk_dhe_ke) (1).
+
+  Also, there is `pre_shared_key` extension, which includes key, received
+  from the server in the last `NewSessionTicket` message.
