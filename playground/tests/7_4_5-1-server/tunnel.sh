@@ -34,4 +34,4 @@ cat >$DATA_PATH/conf.json <<EOF
 }
 EOF
 
-exec $TUNNEL $DATA_PATH/conf.json
+exec $TUNNEL -l DEBUG $DATA_PATH/conf.json

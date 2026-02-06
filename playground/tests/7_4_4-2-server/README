@@ -1,0 +1,24 @@
+Test session resumption/renegotiation interval
+
+Notes:
+- tunnel's server configuration is set with `renegotiate_interval` 1 and
+  `session_cache_timeout` 2. This results with intermittent resumption and
+  renegotiation each 1s, since session timeouts until the next interval, than
+  renegotiation is performed with full handshake.
+
+Security events (for each resumption/renegotiation):
+- notice: TLS handshake successfully performed
+
+Expected:
+- Client successfully connects to the tunnel's server
+- 1s after connection tunnel's server initiates resumption with `HelloRequest`:
+  short handshake is performed by reusing session ticket
+- 2s after connection, server initiates resumption, but since
+  session_cache_timeout exceeded (set in configuration to 2s) session is not
+  reused, that is, instead of resumption, renegotiation is performed with full
+  handshake is performed
+
+Assertion:
+- in wireshark one can see first full handshake with certificates exchange.
+  The next one is resumption: no certificate exchange. Then again, second after,
+  full handshake is performed, etc.
