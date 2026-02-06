@@ -1,9 +1,9 @@
-.Dd January 7, 2026
-.Dt HAT-IEC62351-TUNNEL 1
+.Dd February 6, 2026
+.Dt _TITLE 1
 .Os
 
 .Sh NAME
-.Nm hat-iec62351-tunnel
+.Nm _NAME
 .Nd IEC 62351-3 tunnel
 
 .Sh SYNOPSIS
@@ -42,8 +42,8 @@ connections can be configured to use TLS as defined by IEC 62351-3.
 
 .Ss CONFIGURATION
 
-Structure of configuration file is defined by JSON Schema
-.Sx hat-iec62351-tunnel://main.yaml
+Structure of configuration file is defined by
+.Sx JSON Schema configuration definition
 
 Single configuration can include multiple
 .Em mapping
@@ -113,95 +113,11 @@ initiated by peer, timer responsible for triggering next renegotiation is reset.
 property enables specification of session duration in case of session
 resumption.
 
-.Sh FILES
-
-.Ss hat-iec62351-tunnel://main.yaml
-JSON Schema configuration definition.
+.Ss JSON Schema configuration definition
 
 .Bd -literal
 
-$schema: "https://json-schema.org/draft/2020-12/schema"
-$id: "hat-iec62351-tunnel://main.yaml"
-type: object
-required:
-    - mappings
-properties:
-    type:
-        const: event
-        description: configuration type identification
-    version:
-        type: string
-        description: component version
-    mappings:
-        type: array
-        minItems: 1
-        items:
-            $ref: "hat-iec62351-tunnel://main.yaml#/$defs/mapping"
-$defs:
-    mapping:
-        type: object
-        required:
-            - server
-            - client
-        properties:
-            server:
-                $ref: "hat-iec62351-tunnel://main.yaml#/$defs/endpoint"
-            client:
-                $ref: "hat-iec62351-tunnel://main.yaml#/$defs/endpoint"
-    endpoint:
-        type: object
-        required:
-            - host
-            - port
-        properties:
-            host:
-                type: string
-            port:
-                type: integer
-            ssl:
-                type: object
-                properties:
-                    local_cert:
-                        type: object
-                        description: |
-                            required in case of server endpoint
-                        required:
-                            - cert_path
-                            - key_path
-                        properties:
-                            cert_path:
-                                type: string
-                            key_path:
-                                type: string
-                            password:
-                                type: string
-                    remote_cert:
-                        type: object
-                        required:
-                            - ca_path
-                        properties:
-                            ca_path:
-                                type: string
-                            allowed_cert_sn:
-                                type: array
-                                items:
-                                    type: string
-                            max_cert_len:
-                                type: integer
-                                default: 8192
-                            crl:
-                                type: object
-                                required:
-                                    - path
-                                properties:
-                                    path:
-                                        type: string
-                                    update_interval:
-                                        type: integer
-                    renegotiate_interval:
-                        type: integer
-                    session_cache_timeout:
-                        type: integer
+include(_JSON_SCHEMA_PATH)
 
 .Ed
 

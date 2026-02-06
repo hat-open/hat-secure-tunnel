@@ -1,7 +1,4 @@
 /build
-/cache
 /compile_flags.txt
 /config.mk
 /rules.mk
-/static
-/tests/*/data

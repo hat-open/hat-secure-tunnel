@@ -1,16 +1,16 @@
-.. _git repository: https://github.com/hat-open/hat-iec62351-tunnel.git
+.. _git repository: https://github.com/hat-open/hat-secure-tunnel.git
 .. _Hat Open: https://hat-open.com
 .. _Končar Digital: https://www.koncar.hr/en
 
 
-hat-iec62351-tunnel - IEC 62351-3 tunnel
-========================================
+hat-secure-tunnel - IEC 62351-3 tunnel
+======================================
 
 Application providing tunnel between unencrypted and TLS communication
 based on IEC 62351-3.
 
-`hat-iec62351-tunnel` listens for incoming connections. Once incoming TCP
-connection is established, `hat-iec62351-tunnel` creates new outgoing connection
+`hat-secure-tunnel` listens for incoming connections. Once incoming TCP
+connection is established, `hat-secure-tunnel` creates new outgoing connection
 to other TCP server. These two connections are paired and all data received
 on one connection is sent to other. Closing of one connection results in closing
 of other connection. Both incoming and outgoing connections can be configured to
@@ -40,10 +40,10 @@ Build and install
 Running
 -------
 
-`hat-iec62351-tunnel` accepts path to JSON configuration as command line
+`hat-secure-tunnel` accepts path to JSON configuration as command line
 argument::
 
-    Usage: hat-iec62351-tunnel [-h] [-l LOG_LEVEL] <conf_path>
+    Usage: hat-secure-tunnel [-h] [-l LOG_LEVEL] <conf_path>
 
       Arguments:
         <conf_path>   Path to configuration file or - for stdin
@@ -54,16 +54,16 @@ argument::
                       (default INFO)
 
 Configuration structure is defined by JSON Schema
-``hat-iec62351-tunnel://main.yaml`` available as part of `hat-iec62351-tunnel`
+``hat-secure-tunnel://main.yaml`` available as part of `hat-secure-tunnel`
 manual page::
 
-    $ man hat-iec62351-tunnel
+    $ man hat-secure-tunnel
 
 
 Hat Open
 --------
 
-`hat-iec62351-tunnel` is part of `Hat Open`_ project - open-source framework of
+`hat-secure-tunnel` is part of `Hat Open`_ project - open-source framework of
 tools and libraries for developing applications used for remote monitoring,
 control and management of intelligent electronic devices such as IoT devices,
 PLCs, industrial automation or home automation systems.

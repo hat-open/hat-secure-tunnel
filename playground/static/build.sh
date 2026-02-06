@@ -8,16 +8,40 @@
 
 set -e
 
-ROOT_PATH=$(dirname "$(realpath "$0")")
+usage() {
+    cat <<EOF
+Usage: $0 [OPTION]...
 
-STATIC_PATH=$ROOT_PATH/static
-CACHE_PATH=$ROOT_PATH/cache
-PLAYGROUND_PATH=$ROOT_PATH/playground
+Build static binaries.
 
+Options:
+  -h, --help        display this help and exit
+      --name=NAME   main binary name [hat-secure-tunnel]
+      --arch=ARCH   target architecture [detected]
+EOF
+    exit 0
+}
+
+RUN_PATH=$(dirname "$(realpath "$0")")
+
+PLAYGROUND_PATH=$RUN_PATH/..
+ROOT_PATH=$PLAYGROUND_PATH/..
+BUILD_PATH=$RUN_PATH/build
+CACHE_PATH=$RUN_PATH/cache
+
+name=hat-secure-tunnel
 arch=$(uname -m)
 
+for arg ; do
+    case "$arg" in
+        --help|-h) usage ;;
+        --name=*) name=${arg#*=} ;;
+        --arch=*) arch=${arg#*=} ;;
+        * ) echo "$0: unknown option $arg"; exit 1 ;;
+    esac
+done
 
-download () (
+download() (
     file=$1
     url=$2
     sum=$3
@@ -33,19 +57,17 @@ download () (
     sha256sum -c $file.sum
 )
 
-
-unpack () (
+unpack() (
     file=$1
 
-    mkdir -p $STATIC_PATH/src
-    cd $STATIC_PATH/src
+    mkdir -p $BUILD_PATH/src
+    cd $BUILD_PATH/src
 
     rm -rf ./${file%.tar.gz}
     tar -xzf $CACHE_PATH/$file
 )
 
-
-build_musl () (
+build_musl() (
     name=$1
 
     download $name.tar.gz \
@@ -53,15 +75,14 @@ build_musl () (
              a9a118bbe84d8764da0ea0d28b3ab3fae8477fc7e4085d90102b8596fc7c75e4
     unpack $name.tar.gz
 
-    cd $STATIC_PATH/src/$name
+    cd $BUILD_PATH/src/$name
 
-    ./configure --prefix=$STATIC_PATH --syslibdir=$STATIC_PATH/lib
+    ./configure --prefix=$BUILD_PATH --syslibdir=$BUILD_PATH/lib
     make
     make install
 )
 
-
-build_jansson () (
+build_jansson() (
     name=$1
 
     download $name.tar.gz \
@@ -69,15 +90,14 @@ build_jansson () (
              2521cd51a9641d7a4e457f7215a4cd5bb176f690bc11715ddeec483e85d9e2b3
     unpack $name.tar.gz
 
-    cd $STATIC_PATH/src/$name
+    cd $BUILD_PATH/src/$name
 
-    ./configure --prefix=$STATIC_PATH --disable-shared
+    ./configure --prefix=$BUILD_PATH --disable-shared
     make
     make install
 )
 
-
-build_libuv () (
+build_libuv() (
     name=$1
 
     download $name.tar.gz \
@@ -85,16 +105,15 @@ build_libuv () (
              27e55cf7083913bfb6826ca78cde9de7647cded648d35f24163f2d31bb9f51cd
     unpack $name.tar.gz
 
-    cd $STATIC_PATH/src/$name
+    cd $BUILD_PATH/src/$name
 
     sh autogen.sh
-    ./configure --prefix=$STATIC_PATH --disable-shared
+    ./configure --prefix=$BUILD_PATH --disable-shared
     make
     make install
 )
 
-
-build_kernel_headers () (
+build_kernel_headers() (
     name=$1
 
     download $name.tar.gz \
@@ -102,13 +121,12 @@ build_kernel_headers () (
              16161844e56944d39794ad74c2dfd6faad12bda79b5dc00595f4178d28a92e2d
     unpack $name.tar.gz
 
-    cd $STATIC_PATH/src/$name
+    cd $BUILD_PATH/src/$name
 
-    make ARCH=$arch prefix=$STATIC_PATH install
+    make ARCH=$arch prefix=$BUILD_PATH install
 )
 
-
-build_openssl () (
+build_openssl() (
     name=$1
 
     download $name.tar.gz \
@@ -116,9 +134,9 @@ build_openssl () (
              b6a5f44b7eb69e3fa35dbf15524405b44837a481d43d81daddde3ff21fcbb8e9
     unpack $name.tar.gz
 
-    cd $STATIC_PATH/src/$name
+    cd $BUILD_PATH/src/$name
 
-    ./Configure --prefix=$STATIC_PATH \
+    ./Configure --prefix=$BUILD_PATH \
                 no-shared \
                 enable-ssl3 \
                 enable-ssl3-method \
@@ -131,59 +149,55 @@ build_openssl () (
     make install
 )
 
+build_main() (
+    name=$1
 
-build_hat_iec62351_tunnel () (
-    name=hat-iec62351-tunnel
+    mkdir -p $BUILD_PATH/src/$name
+    cd $BUILD_PATH/src/$name
 
-    mkdir -p $STATIC_PATH/src/$name
-    cd $STATIC_PATH/src/$name
-
-    $ROOT_PATH/configure --prefix=$STATIC_PATH \
+    $ROOT_PATH/configure --prefix=$BUILD_PATH \
+                         --name=$name \
                          --without-pkg-config \
                          CFLAGS="-static"
     make
     make install
 )
 
-
-build_create_crl () (
+build_create_crl() (
     $CC -static -g -O2 \
-        -o $STATIC_PATH/bin/create-crl \
+        -o $BUILD_PATH/bin/create-crl \
         $PLAYGROUND_PATH/create-crl/main.c \
         -lssl -lcrypto
 )
 
-
-mkdir -p $STATIC_PATH
+mkdir -p $BUILD_PATH
 
 if [ "$arch" = "x86_64" ]; then
-    if [ ! -L $STATIC_PATH/lib64 ]; then
-        ln -sf $STATIC_PATH/lib $STATIC_PATH/lib64
-    fi
+    ln -sf $BUILD_PATH/lib $BUILD_PATH/lib64
 fi
 
-if [ ! -f $STATIC_PATH/bin/musl-gcc ]; then
+if [ ! -f $BUILD_PATH/bin/musl-gcc ]; then
     build_musl musl-1.2.5
 fi
 
-export CC=$STATIC_PATH/bin/musl-gcc
+export CC=$BUILD_PATH/bin/musl-gcc
 
-if [ ! -f $STATIC_PATH/lib/libjansson.a ]; then
+if [ ! -f $BUILD_PATH/lib/libjansson.a ]; then
     build_jansson jansson-2.14.1
 fi
 
-if [ ! -f $STATIC_PATH/lib/libuv.a ]; then
+if [ ! -f $BUILD_PATH/lib/libuv.a ]; then
     build_libuv libuv-1.51.0
 fi
 
-if [ ! -d $STATIC_PATH/include/linux ]; then
+if [ ! -d $BUILD_PATH/include/linux ]; then
     build_kernel_headers kernel-headers-4.19.88-2
 fi
 
-if [ ! -f $STATIC_PATH/lib/libssl.a ]; then
+if [ ! -f $BUILD_PATH/lib/libssl.a ]; then
     build_openssl openssl-3.6.0
 fi
 
-build_hat_iec62351_tunnel
+build_main $name
 
 build_create_crl

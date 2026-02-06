@@ -1,0 +1,87 @@
+#!/bin/sh
+
+set -e
+
+usage() {
+    cat <<EOF
+Usage: $0 [OPTION]...
+
+Create static binary distribution.
+
+Options:
+  -h, --help              display this help and exit
+      --name=NAME         distribution name [hat-secure-tunnel]
+      --version=VERSION   version [detected]
+      --license=PATH      path to license file [detected]
+      --output=DIR        path to output directory [dist]
+EOF
+    exit 0
+}
+
+RUN_PATH=$(dirname "$(realpath "$0")")
+
+PLAYGROUND_PATH=$RUN_PATH/..
+ROOT_PATH=$PLAYGROUND_PATH/..
+BUILD_PATH=$RUN_PATH/build
+
+name=hat-secure-tunnel
+version=$(cat $ROOT_PATH/VERSION)
+license=$ROOT_PATH/LICENSE
+output=$RUN_PATH/dist
+
+for arg ; do
+    case "$arg" in
+        --help|-h) usage ;;
+        --name=*) name=${arg#*=} ;;
+        --version=*) version=${arg#*=} ;;
+        --license=*) license=${arg#*=} ;;
+        --output=*) output=${arg#*=} ;;
+        * ) echo "$0: unknown option $arg"; exit 1 ;;
+    esac
+done
+
+$RUN_PATH/build.sh --name=$name
+
+dist_name=$name-$version
+dist_dir=$output/$dist_name
+dist_file=$dist_dir.tar.gz
+
+rm -rf $dist_dir $dist_file
+trap "exit 1" HUP INT PIPE QUIT TERM
+trap "rm -rf $dist_dir" EXIT
+
+mkdir -p $dist_dir
+
+install -D -m 755 -t $dist_dir/bin \
+                     $BUILD_PATH/bin/$name
+install -D -m 644 -t $dist_dir/share/man/man1 \
+                     $BUILD_PATH/share/man/man1/$name.1.gz
+install -D -m 644 -t $dist_dir/share/licenses/jansson \
+                     $BUILD_PATH/src/jansson-*/LICENSE
+install -D -m 644 -t $dist_dir/share/licenses/libuv \
+                     $BUILD_PATH/src/libuv-*/LICENSE
+install -D -m 644 -t $dist_dir/share/licenses/openssl \
+                     $BUILD_PATH/src/openssl-*/LICENSE.txt
+install -D -m 644 -t $dist_dir/share/licenses/$name \
+                     $license
+install -D -m 644 -t $dist_dir \
+                     $license
+
+cat >$dist_dir/README <<EOF
+$name - IEC 62351-3 tunnel
+$(echo $name | tr '[:print:]' '=')=====================
+
+Application providing tunnel between unencrypted and TLS communication
+based on IEC 62351-3.
+
+To use $name and access manual pages, add bin directory to
+PATH environment variable.
+
+For more information run:
+  $ man $name
+EOF
+
+tar -czf $dist_file --owner=0 --group=0 -C $(dirname $dist_dir) \
+                                           $(basename $dist_dir)
+
+echo "created $dist_file"

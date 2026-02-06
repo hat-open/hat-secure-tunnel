@@ -44,7 +44,9 @@
     "ecdsa_brainpoolP384r1_sha384:"                                            \
     "ecdsa_brainpoolP512r1_sha512"
 
-#define SESSION_ID "HAT-IEC62351"
+#ifndef SESSION_ID
+#error "SESSION_ID definition required"
+#endif
 
 #define log_debug(...) log_log(LOG_LEVEL_DEBUG, __VA_ARGS__)
 #define log_info(...) log_log(LOG_LEVEL_INFO, __VA_ARGS__)

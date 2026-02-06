@@ -11,8 +11,8 @@ rm -rf $BUILD_PATH
 mkdir -p $BUILD_PATH
 
 if [ -z "$*" ]; then
-    IMAGES="linux/amd64/build-hat-iec62351-tunnel:debian11
-            linux/amd64/build-hat-iec62351-tunnel:alpine3.23"
+    IMAGES="linux/amd64/build-hat-secure-tunnel:debian11
+            linux/amd64/build-hat-secure-tunnel:alpine3.23"
 else
     IMAGES="$*"
 fi

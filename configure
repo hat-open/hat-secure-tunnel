@@ -3,7 +3,7 @@
 set -e
 
 
-usage () {
+usage() {
     cat <<EOF
 Usage: $0 [OPTION]... [VAR=VALUE]...
 
@@ -28,8 +28,11 @@ Fine tuning of the installation directories:
   --mandir=DIR            man documentation [DATAROOTDIR/man]
 
 System types:
-  --build=BUILD     configure for building on BUILD [guessed]
-  --host=HOST       cross-compile to build programs to run on HOST [BUILD]
+  --build=BUILD           configure for building on BUILD [guessed]
+  --host=HOST             cross-compile to build programs to run on HOST [BUILD]
+
+Optional features:
+  --name=NAME             application name [hat-secure-tunnel]
 
 Optional Packages:
   --with-PACKAGE[=ARG]    use PACKAGE [ARG=yes]
@@ -74,6 +77,7 @@ datarootdir='$(prefix)/share'
 mandir='$(datarootdir)/man'
 build=
 host=
+name=hat-secure-tunnel
 pkg_config=
 
 CFLAGS_AUTO=
@@ -92,6 +96,7 @@ for arg ; do
         --mandir=*) mandir=${arg#*=} ;;
         --build=*) build=${arg#*=} ;;
         --host=*) host=${arg#*=} ;;
+        --name=*) name=${arg#*=} ;;
         --with-pkg-config|--with-pkg-config=yes) pkg_config=yes ;;
         --without-pkg-config|--with-pkg-config=no) pkg_config=no ;;
         -* ) echo "$0: unknown option $arg" ;;
@@ -119,6 +124,7 @@ fi
 CC="${CC:-cc}"
 
 add_cflags -g -O2
+add_cflags -DSESSION_ID=\\\"$(echo $name | tr '[:lower:]' '[:upper:]')\\\"
 
 if [ "$pkg_config" = yes ]; then
     for lib in libuv openssl jansson; do
@@ -152,6 +158,7 @@ datarootdir = $datarootdir
 mandir = $mandir
 build = $build
 host = $host
+name = $name
 
 CC = $CC
 
@@ -168,20 +175,21 @@ LIBS_AUTO = $LIBS_AUTO
 LIBS_ALL = \$(LIBS_AUTO) \$(LIBS)
 
 SRC_DIR = \$(srcdir)/src
+DOC_DIR = \$(srcdir)/doc
 BUILD_DIR = build
 OBJ_DIR = \$(BUILD_DIR)/obj
-BIN = \$(BUILD_DIR)/hat-iec62351-tunnel
+BIN = \$(BUILD_DIR)/\$(name)
+MAN = \$(BUILD_DIR)/\$(name).mdoc
 
 SOURCES = $sources
 HEADERS = $headers
 OBJECTS = $objects
+
+DOC_MANUAL = \$(DOC_DIR)/manual.mdoc.m4
+DOC_JSON_SCHEMA = \$(DOC_DIR)/json_schema.yaml
 EOF
 
 {
-printf "\$(BIN): \$(OBJECTS)\n"
-printf "\t@mkdir -p \$(BUILD_DIR)\n"
-printf "\t\$(CC) \$(LDFLAGS_ALL) -o \$(BIN) \$(OBJECTS) \$(LIBS_ALL)\n"
-
 for src in $sources; do
     obj="${src%.c}.o"
     obj="\$(OBJ_DIR)${obj#\$(SRC_DIR)}"
