@@ -85,7 +85,10 @@ property is omitted, remote certificate validation is not preformed.
 
 .Em ca_path
 property references certificate authority certificate responsible for signing
-peer certificate. This file can contain multiple CA certificates.
+peer certificate. This file can contain multiple CA certificates. It is
+recommended to configure at least two different trust anchors (for example, by
+including at least two distinct root CA certificates in the file referenced by
+.Em ca_path Ns ).
 
 If
 .Em allowed_cert_sn
@@ -108,10 +111,24 @@ of CRL's nextUpdate value.
 .Em renegotiate_interval
 property specifies optional TLS renegotiation interval. If renegotiation is
 initiated by peer, timer responsible for triggering next renegotiation is reset.
+TLS session renegotiation is controlled by the
+.Em renegotiate_interval
+parameter. It is recommended to configure this interval to no less than 600
+seconds (10 minutes) and no less than half of the configured CRL update period.
+Using shorter values may reduce alignment with the timing expectations defined
+in IEC 62351-4.
 
 .Em session_cache_timeout
 property enables specification of session duration in case of session
-resumption.
+resumption. TLS session resumption is supported through the use of session
+identifiers and session tickets, with tickets being preferred. It is
+recommended to configure the system so that session resumption remains possible
+at least every two hours, for example by setting
+.Em session_cache_timeout
+to 7200 seconds or higher. Session state is maintained in memory only,
+therefore session resumption is available only while the process is running.
+After a process restart, a new full TLS handshake is required before resumption
+can be used again.
 
 .Ss JSON Schema configuration definition
 
