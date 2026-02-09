@@ -1,0 +1,11 @@
+Test signature algorithm not supported
+
+This tests the following requirement from the standard: "The failure of finding
+a matching signature algorithm to the certificate components during a TLS
+handshake shall raise a security event."
+
+Security events:
+- alarm: certificate validation: failed verification
+
+Expected:
+- close connection
