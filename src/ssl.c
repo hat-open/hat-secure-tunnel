@@ -628,7 +628,7 @@ static int verify_crl(ssl_t *ssl) {
 
 static void renegotiate(ssl_t *ssl) {
     if (ssl->version == TLS1_2_VERSION) {
-        if (SSL_renegotiate(ssl->ssl) != 1) {
+        if (SSL_renegotiate_abbreviated(ssl->ssl) != 1) {
             log_error("SSL_renegotiate error");
             close_channel(ssl->endpoint->channel);
             return;

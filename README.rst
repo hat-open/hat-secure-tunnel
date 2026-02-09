@@ -53,9 +53,8 @@ argument::
         -l LOG_LEVEL  Set logging level (DEBUG, INFO, WARNING, ERROR)
                       (default INFO)
 
-Configuration structure is defined by JSON Schema
-``hat-secure-tunnel://main.yaml`` available as part of `hat-secure-tunnel`
-manual page::
+Configuration is JSON file with structure defined by JSON Schema available as
+part of `hat-secure-tunnel` manual page::
 
     $ man hat-secure-tunnel
 
