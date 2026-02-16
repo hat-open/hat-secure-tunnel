@@ -1,0 +1,7 @@
+Test renegotiation with client TLS version change
+
+Security events:
+- alarm: requested TLS Version change in ongoing communication detected"
+
+Expected:
+- connection termination

@@ -1,0 +1,11 @@
+Test session resumption with client TLS version change
+
+Session resumption is possible only if TLS version remains the same. If version
+changes, full handshake is performed.
+
+Security events:
+- notice: TLS handshake successfully performed
+
+Expected:
+- first and second connection perform full handshake
+- two connections - both with "session reuse 0" log
