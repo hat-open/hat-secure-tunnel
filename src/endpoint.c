@@ -3,6 +3,7 @@
 
 static void destroy_handle(uv_tcp_t *handle);
 static void destroy_getaddrinfo_req(uv_getaddrinfo_t *req);
+static void close_handle(uv_tcp_t *handle);
 
 
 static void on_handle_alloc(uv_handle_t *h, size_t suggested_size,
@@ -85,6 +86,15 @@ static void on_handle_close(uv_handle_t *handle) {
 
     if (endpoint->close_cb && !endpoint->getaddrinfo_req && !endpoint->ssl)
         endpoint->close_cb(endpoint);
+}
+
+
+static void on_handle_shutdown(uv_shutdown_t *req, int status) {
+    log_debug("on_handle_shutdown");
+
+    endpoint_t *endpoint = req->data;
+
+    close_handle(endpoint->handle);
 }
 
 
@@ -236,6 +246,7 @@ endpoint_t *create_endpoint(endpoint_type_t type, channel_t *channel,
     endpoint->getaddrinfo_req = NULL;
     endpoint->ssl = NULL;
     endpoint->connect_req.data = endpoint;
+    endpoint->shutdown_req.data = endpoint;
 
     endpoint->handle = create_handle(endpoint);
     if (!endpoint->handle) {
@@ -294,8 +305,12 @@ void close_endpoint(endpoint_t *endpoint) {
     if (endpoint->getaddrinfo_req)
         cancel_getaddrinfo_req(endpoint->getaddrinfo_req);
 
-    if (endpoint->handle)
-        close_handle(endpoint->handle);
+    if (endpoint->handle) {
+        if (uv_shutdown(&(endpoint->shutdown_req),
+                        (uv_stream_t *)endpoint->handle,
+                        on_handle_shutdown) < 0)
+            close_handle(endpoint->handle);
+    }
 }
 
 

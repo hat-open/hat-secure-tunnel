@@ -862,6 +862,8 @@ ssl_t *create_ssl(endpoint_t *endpoint, ssl_close_cb_t close_cb) {
     ssl->ssl = NULL;
     ssl->crl = NULL;
     ssl->output_plain_data = NULL;
+    ssl->active = false;
+    ssl->shutdown = false;
     ssl->key_update_requested = false;
     ssl->version = 0;
     ssl->extensions = (ssl_extensions_t){.renegotiation_info = false,
@@ -956,6 +958,13 @@ error:
 
 
 void close_ssl(ssl_t *ssl) {
+    if (ssl->active && !ssl->shutdown) {
+        ssl->shutdown = true;
+
+        SSL_shutdown(ssl->ssl);
+        read_output_bio(ssl);
+    }
+
     if (ssl->renegotiate_timer)
         close_timer(ssl->renegotiate_timer);
 
@@ -989,6 +998,8 @@ void destroy_ssl(ssl_t *ssl) {
 
 void process_ssl(ssl_t *ssl) {
     ERR_clear_error();
+
+    ssl->active = true;
 
 init:
     if (!SSL_is_init_finished(ssl->ssl)) {

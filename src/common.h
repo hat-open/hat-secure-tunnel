@@ -195,6 +195,7 @@ struct endpoint_t {
     uv_getaddrinfo_t *getaddrinfo_req;
     ssl_t *ssl;
     uv_connect_t connect_req;
+    uv_shutdown_t shutdown_req;
 };
 
 struct ssl_ctx_t {
@@ -220,6 +221,8 @@ struct ssl_t {
     SSL *ssl;
     X509_CRL *crl;
     buffer_t *output_plain_data;
+    bool active;
+    bool shutdown;
     bool key_update_requested;
     int version;
     ssl_extensions_t extensions;
