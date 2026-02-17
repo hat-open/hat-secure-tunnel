@@ -13,7 +13,9 @@ Options:
       --name=NAME         distribution name [hat-secure-tunnel]
       --version=VERSION   version [detected]
       --license=PATH      path to license file [detected]
-      --output=DIR        path to output directory [dist]
+      --build-dir=PATH    build directory path [build]
+      --cache-dir=PATH    cache directory path [cache]
+      --output-dir=PATH   output directory path [dist]
 EOF
     exit 0
 }
@@ -22,28 +24,33 @@ RUN_PATH=$(dirname "$(realpath "$0")")
 
 PLAYGROUND_PATH=$RUN_PATH/..
 ROOT_PATH=$PLAYGROUND_PATH/..
-BUILD_PATH=$RUN_PATH/build
 
 name=hat-secure-tunnel
 version=$(cat $ROOT_PATH/VERSION)
 license=$ROOT_PATH/LICENSE
-output=$RUN_PATH/dist
+build_dir=$RUN_PATH/build
+cache_dir=$RUN_PATH/cache
+output_dir=$RUN_PATH/dist
 
-for arg ; do
+for arg; do
     case "$arg" in
         --help|-h) usage ;;
         --name=*) name=${arg#*=} ;;
         --version=*) version=${arg#*=} ;;
         --license=*) license=${arg#*=} ;;
-        --output=*) output=${arg#*=} ;;
+        --build-dir=*) build_dir=${arg#*=};;
+        --cache-dir=*) cache_dir=${arg#*=};;
+        --output-dir=*) output_dir=${arg#*=} ;;
         * ) echo "$0: unknown option $arg"; exit 1 ;;
     esac
 done
 
-$RUN_PATH/build.sh --name=$name
+$RUN_PATH/build.sh --name=$name \
+                   --build-dir=$build_dir \
+                   --cache-dir=$cache_dir
 
 dist_name=$name-$version
-dist_dir=$output/$dist_name
+dist_dir=$output_dir/$dist_name
 dist_file=$dist_dir.tar.gz
 
 rm -rf $dist_dir $dist_file
@@ -53,15 +60,15 @@ trap "rm -rf $dist_dir" EXIT
 mkdir -p $dist_dir
 
 install -D -m 755 -t $dist_dir/bin \
-                     $BUILD_PATH/bin/$name
+                     $build_dir/bin/$name
 install -D -m 644 -t $dist_dir/share/man/man1 \
-                     $BUILD_PATH/share/man/man1/$name.1.gz
+                     $build_dir/share/man/man1/$name.1.gz
 install -D -m 644 -t $dist_dir/share/licenses/jansson \
-                     $BUILD_PATH/src/jansson-*/LICENSE
+                     $build_dir/src/jansson-*/LICENSE
 install -D -m 644 -t $dist_dir/share/licenses/libuv \
-                     $BUILD_PATH/src/libuv-*/LICENSE
+                     $build_dir/src/libuv-*/LICENSE
 install -D -m 644 -t $dist_dir/share/licenses/openssl \
-                     $BUILD_PATH/src/openssl-*/LICENSE.txt
+                     $build_dir/src/openssl-*/LICENSE.txt
 install -D -m 644 -t $dist_dir/share/licenses/$name \
                      $license
 install -D -m 644 -t $dist_dir \
