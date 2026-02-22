@@ -70,7 +70,9 @@ property is ommited, TLS communication is not enabled.
 .Em local_cert
 property provides paths to files containing local certificate and private key.
 This property can be omitted in case of client endpoint. By omitting this
-property, client connection will not include client side sertificate.
+property, client connection will not include client side certificate. It is
+recommended not to use self-signed certificates, and the responsibility for the
+certificate handling is on the end user.
 Content of
 .Em cert_path
 and
