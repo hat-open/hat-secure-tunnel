@@ -162,7 +162,7 @@ build_main() (
     $ROOT_PATH/configure --prefix=$build_dir \
                          --name=$name \
                          --without-pkg-config \
-                         CFLAGS="-static"
+                         LDFLAGS="-static"
     make
     make install
 )
