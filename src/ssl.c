@@ -589,8 +589,10 @@ static int verify_cipher(ssl_t *ssl) {
 
 
 static int verify_extensions(ssl_t *ssl) {
-    if (!ssl->extensions.signature_algorithms)
-        log_event(SECURITY_EVENT_TLS_NO_SIG_ALGO_EXT, NULL);
+    if (ssl->endpoint->type == ENDPOINT_TYPE_SERVER) {
+        if (!ssl->extensions.signature_algorithms)
+            log_event(SECURITY_EVENT_TLS_NO_SIG_ALGO_EXT, NULL);
+    }
 
     return 1;
 }
