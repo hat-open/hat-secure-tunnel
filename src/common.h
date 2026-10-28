@@ -194,6 +194,7 @@ struct endpoint_t {
     uv_tcp_t *handle;
     uv_getaddrinfo_t *getaddrinfo_req;
     ssl_t *ssl;
+    bool reading;
     uv_connect_t connect_req;
     uv_shutdown_t shutdown_req;
 };

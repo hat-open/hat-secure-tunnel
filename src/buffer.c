@@ -73,12 +73,11 @@ void push_buffer(buffer_t *buffer) {
 buffer_t *pop_buffer(buffer_pool_t *pool) {
     buffer_t *buffer = pool->buffers;
 
-    if (buffer) {
+    if (buffer)
         pool->buffers = buffer->next;
 
-    } else {
-        stop_channel(pool->channel);
-    }
+    // can't call stop_channel in case of empty pool because this function is
+    // called in on_handle_alloc
 
     return buffer;
 }

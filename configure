@@ -50,21 +50,20 @@ Some influential environment variables:
 Use these variables to override the choices made by 'configure' or to help
 it to find libraries and programs with nonstandard names/locations.
 EOF
-    exit 0
 }
 
 
-add_cflags () {
+add_cflags() {
     CFLAGS_AUTO="${CFLAGS_AUTO:+$CFLAGS_AUTO }$*"
 }
 
 
-add_ldflags () {
+add_ldflags() {
     LDFLAGS_AUTO="${LDFLAGS_AUTO:+$LDFLAGS_AUTO }$*"
 }
 
 
-add_libs () {
+add_libs() {
     LIBS_AUTO="${LIBS_AUTO:+$LIBS_AUTO }$*"
 }
 
@@ -87,23 +86,23 @@ LIBS_AUTO=
 
 for arg ; do
     case "$arg" in
-        --help|-h) usage ;;
-        --srcdir=*) srcdir=${arg#*=} ;;
-        --prefix=*) prefix=${arg#*=} ;;
-        --exec-prefix=*) exec_prefix=${arg#*=} ;;
-        --bindir=*) bindir=${arg#*=} ;;
-        --datarootdir=*) datarootdir=${arg#*=} ;;
-        --mandir=*) mandir=${arg#*=} ;;
-        --build=*) build=${arg#*=} ;;
-        --host=*) host=${arg#*=} ;;
-        --name=*) name=${arg#*=} ;;
-        --with-pkg-config|--with-pkg-config=yes) pkg_config=yes ;;
-        --without-pkg-config|--with-pkg-config=no) pkg_config=no ;;
-        -* ) echo "$0: unknown option $arg" ;;
-        CC=*) CC=${arg#*=} ;;
-        CFLAGS=*) CFLAGS=${arg#*=} ;;
-        LDFLAGS=*) LDFLAGS=${arg#*=} ;;
-        LIBS=*) LIBS=${arg#*=} ;;
+        --help|-h) usage; exit 0;;
+        --srcdir=*) srcdir=${arg#*=};;
+        --prefix=*) prefix=${arg#*=};;
+        --exec-prefix=*) exec_prefix=${arg#*=};;
+        --bindir=*) bindir=${arg#*=};;
+        --datarootdir=*) datarootdir=${arg#*=};;
+        --mandir=*) mandir=${arg#*=};;
+        --build=*) build=${arg#*=};;
+        --host=*) host=${arg#*=};;
+        --name=*) name=${arg#*=};;
+        --with-pkg-config|--with-pkg-config=yes) pkg_config=yes;;
+        --without-pkg-config|--with-pkg-config=no) pkg_config=no;;
+        -* ) echo "$0: unknown option $arg";;
+        CC=*) CC=${arg#*=};;
+        CFLAGS=*) CFLAGS=${arg#*=};;
+        LDFLAGS=*) LDFLAGS=${arg#*=};;
+        LIBS=*) LIBS=${arg#*=};;
         *=*) ;;
     esac
 done

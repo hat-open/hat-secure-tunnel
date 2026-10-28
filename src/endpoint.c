@@ -30,6 +30,11 @@ static void on_handle_read(uv_stream_t *s, ssize_t nread, const uv_buf_t *buf) {
     buffer_t *buffer =
         (buf->base ? (buffer_t *)(buf->base - sizeof(buffer_t)) : NULL);
 
+    if (nread == UV_ENOBUFS) {
+        stop_channel(endpoint->channel);
+        return;
+    }
+
     if (nread > 0) {
         log_debug("received %ld bytes", nread);
 
@@ -233,7 +238,7 @@ static void destroy_getaddrinfo_req(uv_getaddrinfo_t *req) { free(req); }
 endpoint_t *create_endpoint(endpoint_type_t type, channel_t *channel,
                             endpoint_close_cb_t close_cb) {
     endpoint_t *endpoint = malloc(sizeof(endpoint_t));
-    if (!channel) {
+    if (!endpoint) {
         log_error("malloc error");
         goto error;
     }
@@ -245,6 +250,7 @@ endpoint_t *create_endpoint(endpoint_type_t type, channel_t *channel,
     endpoint->handle = NULL;
     endpoint->getaddrinfo_req = NULL;
     endpoint->ssl = NULL;
+    endpoint->reading = false;
     endpoint->connect_req.data = endpoint;
     endpoint->shutdown_req.data = endpoint;
 
@@ -318,7 +324,8 @@ void destroy_endpoint(endpoint_t *endpoint) { free(endpoint); }
 
 
 void start_endpoint(endpoint_t *endpoint) {
-    if (!endpoint->handle || uv_is_active((uv_handle_t *)endpoint->handle))
+    if (!endpoint->handle || endpoint->reading ||
+        uv_is_closing((uv_handle_t *)endpoint->handle))
         return;
 
     if (uv_read_start((uv_stream_t *)endpoint->handle, on_handle_alloc,
@@ -328,16 +335,19 @@ void start_endpoint(endpoint_t *endpoint) {
         return;
     }
 
+    endpoint->reading = true;
+
     if (endpoint->ssl)
         process_ssl(endpoint->ssl);
 }
 
 
 void stop_endpoint(endpoint_t *endpoint) {
-    if (!endpoint->handle || !uv_is_active((uv_handle_t *)endpoint->handle))
+    if (!endpoint->handle || !endpoint->reading)
         return;
 
     uv_read_stop((uv_stream_t *)endpoint->handle);
+    endpoint->reading = false;
 }
 
 

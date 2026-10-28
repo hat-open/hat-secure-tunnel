@@ -337,8 +337,10 @@ static void destroy_timer(uv_timer_t *timer) { free(timer); }
 static void read_output_bio(ssl_t *ssl) {
     while (true) {
         buffer_t *buffer = pop_buffer(ssl->endpoint->channel->pool);
-        if (!buffer)
+        if (!buffer) {
+            stop_channel(ssl->endpoint->channel);
             break;
+        }
 
         int ret = BIO_read(ssl->output_bio, buffer->data, BUFFER_SIZE);
 
@@ -365,8 +367,10 @@ static void read_output_bio(ssl_t *ssl) {
 static void read_ssl(ssl_t *ssl) {
     while (true) {
         buffer_t *buffer = pop_buffer(ssl->endpoint->channel->pool);
-        if (!buffer)
+        if (!buffer) {
+            stop_channel(ssl->endpoint->channel);
             break;
+        }
 
         int ret = SSL_read(ssl->ssl, buffer->data, BUFFER_SIZE);
 

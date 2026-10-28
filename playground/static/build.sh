@@ -21,7 +21,6 @@ Options:
       --build-dir=PATH  build directory path [build]
       --cache-dir=PATH  cache directory path [cache]
 EOF
-    exit 0
 }
 
 RUN_PATH=$(dirname "$(realpath "$0")")
@@ -36,12 +35,12 @@ cache_dir=$RUN_PATH/cache
 
 for arg; do
     case "$arg" in
-        --help|-h) usage;;
+        --help|-h) usage; exit 0;;
         --name=*) name=${arg#*=};;
         --arch=*) arch=${arg#*=};;
         --build-dir=*) build_dir=${arg#*=};;
         --cache-dir=*) cache_dir=${arg#*=};;
-        *) echo "$0: unknown option $arg"; exit 1;;
+        *) echo "$0: unknown option $arg" >&2; exit 1;;
     esac
 done
 

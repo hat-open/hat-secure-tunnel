@@ -59,7 +59,7 @@ channel_t *create_channel(mapping_t *mapping, channel_close_cb_t close_cb) {
 
 error:
     if (channel) {
-        if (!channel->server && !channel->server)
+        if (!channel->server && !channel->client)
             destroy_channel(channel);
 
         else

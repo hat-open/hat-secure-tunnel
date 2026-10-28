@@ -17,7 +17,6 @@ Options:
       --cache-dir=PATH    cache directory path [cache]
       --output-dir=PATH   output directory path [dist]
 EOF
-    exit 0
 }
 
 RUN_PATH=$(dirname "$(realpath "$0")")
@@ -34,14 +33,14 @@ output_dir=$RUN_PATH/dist
 
 for arg; do
     case "$arg" in
-        --help|-h) usage ;;
-        --name=*) name=${arg#*=} ;;
-        --version=*) version=${arg#*=} ;;
-        --license=*) license=${arg#*=} ;;
+        --help|-h) usage; exit 0;;
+        --name=*) name=${arg#*=};;
+        --version=*) version=${arg#*=};;
+        --license=*) license=${arg#*=};;
         --build-dir=*) build_dir=${arg#*=};;
         --cache-dir=*) cache_dir=${arg#*=};;
-        --output-dir=*) output_dir=${arg#*=} ;;
-        * ) echo "$0: unknown option $arg"; exit 1 ;;
+        --output-dir=*) output_dir=${arg#*=};;
+        * ) echo "$0: unknown option $arg"; exit 1;;
     esac
 done
 
