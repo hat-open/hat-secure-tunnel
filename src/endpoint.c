@@ -352,6 +352,12 @@ void stop_endpoint(endpoint_t *endpoint) {
 
 
 void write_endpoint(endpoint_t *endpoint, buffer_t *buffer, bool skip_ssl) {
+    if (!endpoint || !endpoint->handle ||
+        uv_is_closing((uv_handle_t *)endpoint->handle)) {
+        push_buffer(buffer);
+        return;
+    }
+
     if (endpoint->ssl && !skip_ssl) {
         add_ssl_output_plain_data(endpoint->ssl, buffer);
         return;
